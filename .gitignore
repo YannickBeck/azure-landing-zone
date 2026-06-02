@@ -1,0 +1,24 @@
+# Compiled Bicep ARM templates (nicht einchecken)
+**/*.json
+!bicepconfig.json
+
+# Local parameter overrides mit echten Subscription IDs
+*.local.bicepparam
+*.local.yaml
+*.local.json
+
+# Azure CLI cache
+.azure/
+
+# PowerShell
+*.ps1xml
+
+# Editors
+.vscode/settings.json
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
