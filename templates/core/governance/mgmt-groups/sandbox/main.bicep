@@ -1,53 +1,31 @@
 // ================================================================ //
 // ALZ Sandbox Management Group
-// Sandbox for experimentation - relaxed policies, no Corp connectivity
+// Sandbox fuer Experimente - lockere Policies, keine Corp-Anbindung.
 // Scope: Tenant
 // ================================================================ //
 
 targetScope = 'tenant'
 
-import { alzCoreType } from '../../../../alzCoreType.bicep'
+@description('ID (Name) der Sandbox Management Group.')
+param parSandboxMgId string = 'alz-sandbox'
 
-// ================ //
-// Parameters
-// ================ //
+@description('Anzeigename der Sandbox Management Group.')
+param parSandboxMgDisplayName string = 'Sandbox'
 
-@description('Configuration for the Sandbox management group.')
-param sandboxConfig alzCoreType
+@description('ID der uebergeordneten Intermediate-Root Management Group.')
+param parParentMgId string = 'alz'
 
-@description('Array of Azure regions.')
-param parLocations array = [
-  deployment().location
-]
-
-@description('Enable or disable telemetry.')
-param parEnableTelemetry bool = true
-
-// ================ //
-// Variables
-// ================ //
-
-var varSandboxMgName = sandboxConfig.managementGroupName ?? 'alz-sandbox'
-var varSandboxMgDisplayName = sandboxConfig.managementGroupDisplayName ?? 'Sandbox'
-var varSandboxMgParentId = sandboxConfig.managementGroupParentId ?? 'alz'
-
-// ================ //
-// Modules
-// ================ //
-
-module sandboxManagementGroup 'br/public:avm/res/management/management-group:0.1.2' = if (sandboxConfig.createOrUpdateManagementGroup) {
-  name: 'alz-sandbox-MG-${uniqueString(deployment().name)}'
-  params: {
-    name: varSandboxMgName
-    displayName: varSandboxMgDisplayName
-    parentId: '/providers/Microsoft.Management/managementGroups/${varSandboxMgParentId}'
-    enableTelemetry: parEnableTelemetry
+resource sandboxManagementGroup 'Microsoft.Management/managementGroups@2023-04-01' = {
+  name: parSandboxMgId
+  properties: {
+    displayName: parSandboxMgDisplayName
+    details: {
+      parent: {
+        id: '/providers/Microsoft.Management/managementGroups/${parParentMgId}'
+      }
+    }
   }
 }
 
-// ================ //
-// Outputs
-// ================ //
-
-@description('The resource ID of the Sandbox management group.')
-output outSandboxManagementGroupId string = '/providers/Microsoft.Management/managementGroups/${varSandboxMgName}'
+@description('Resource ID der Sandbox Management Group.')
+output outSandboxManagementGroupId string = sandboxManagementGroup.id

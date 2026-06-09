@@ -1,53 +1,31 @@
 // ================================================================ //
 // ALZ Decommissioned Management Group
-// Holds subscriptions being retired - strict deny policies
+// Enthaelt stillzulegende Subscriptions - strikte Deny-Policies.
 // Scope: Tenant
 // ================================================================ //
 
 targetScope = 'tenant'
 
-import { alzCoreType } from '../../../../alzCoreType.bicep'
+@description('ID (Name) der Decommissioned Management Group.')
+param parDecommissionedMgId string = 'alz-decommissioned'
 
-// ================ //
-// Parameters
-// ================ //
+@description('Anzeigename der Decommissioned Management Group.')
+param parDecommissionedMgDisplayName string = 'Decommissioned'
 
-@description('Configuration for the Decommissioned management group.')
-param decommissionedConfig alzCoreType
+@description('ID der uebergeordneten Intermediate-Root Management Group.')
+param parParentMgId string = 'alz'
 
-@description('Array of Azure regions.')
-param parLocations array = [
-  deployment().location
-]
-
-@description('Enable or disable telemetry.')
-param parEnableTelemetry bool = true
-
-// ================ //
-// Variables
-// ================ //
-
-var varDecommMgName = decommissionedConfig.managementGroupName ?? 'alz-decommissioned'
-var varDecommMgDisplayName = decommissionedConfig.managementGroupDisplayName ?? 'Decommissioned'
-var varDecommMgParentId = decommissionedConfig.managementGroupParentId ?? 'alz'
-
-// ================ //
-// Modules
-// ================ //
-
-module decommissionedManagementGroup 'br/public:avm/res/management/management-group:0.1.2' = if (decommissionedConfig.createOrUpdateManagementGroup) {
-  name: 'alz-decommissioned-MG-${uniqueString(deployment().name)}'
-  params: {
-    name: varDecommMgName
-    displayName: varDecommMgDisplayName
-    parentId: '/providers/Microsoft.Management/managementGroups/${varDecommMgParentId}'
-    enableTelemetry: parEnableTelemetry
+resource decommissionedManagementGroup 'Microsoft.Management/managementGroups@2023-04-01' = {
+  name: parDecommissionedMgId
+  properties: {
+    displayName: parDecommissionedMgDisplayName
+    details: {
+      parent: {
+        id: '/providers/Microsoft.Management/managementGroups/${parParentMgId}'
+      }
+    }
   }
 }
 
-// ================ //
-// Outputs
-// ================ //
-
-@description('The resource ID of the Decommissioned management group.')
-output outDecommissionedManagementGroupId string = '/providers/Microsoft.Management/managementGroups/${varDecommMgName}'
+@description('Resource ID der Decommissioned Management Group.')
+output outDecommissionedManagementGroupId string = decommissionedManagementGroup.id

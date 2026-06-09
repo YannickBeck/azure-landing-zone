@@ -38,7 +38,7 @@ Tenant Root
 ### 1. Repository klonen
 
 ```powershell
-git clone https://github.com/<DEIN_USER>/azure-landing-zone.git
+git clone https://github.com/YannickBeck/azure-landing-zone.git
 cd azure-landing-zone
 ```
 
