@@ -5,17 +5,6 @@ using './main.bicep'
 // Deployment-Scope: Connectivity Subscription
 // ===============================================================
 
-param parLocations = [
-  'germanywestcentral'
-  'northeurope'
-]
-
-param parGlobalResourceLock = {
-  name: 'GlobalResourceLock'
-  kind: 'None'
-  notes: 'This lock was created by the ALZ Bicep Accelerator.'
-}
-
 param parTags = {
   Environment: 'Production'
   ManagedBy: 'Platform Team'
@@ -26,7 +15,6 @@ param parEnableTelemetry = true
 
 param parHubNetworkingResourceGroupNamePrefix = 'rg-alz-conn'
 param parDnsResourceGroupNamePrefix = 'rg-alz-dns'
-param parDnsPrivateResolverResourceGroupNamePrefix = 'rg-alz-dnspr'
 
 param hubNetworks = [
   // ======== Primärer Hub: Germany West Central ========

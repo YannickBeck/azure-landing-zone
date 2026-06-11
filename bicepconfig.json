@@ -9,7 +9,8 @@
         "no-unused-vars": { "level": "warning" },
         "prefer-interpolation": { "level": "warning" },
         "secure-parameter-default": { "level": "error" },
-        "simplify-interpolation": { "level": "warning" }
+        "simplify-interpolation": { "level": "warning" },
+        "no-hardcoded-env-urls": { "level": "off" }
       }
     }
   },

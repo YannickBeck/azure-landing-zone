@@ -14,12 +14,6 @@ targetScope = 'subscription'
 // Type Definitions
 // ================ //
 
-type lockType = {
-  name: string
-  kind: 'CanNotDelete' | 'ReadOnly' | 'None'
-  notes: string?
-}
-
 type subnetType = {
   name: string
   addressPrefix: string
@@ -97,18 +91,6 @@ type hubNetworkType = {
 // Parameters
 // ================ //
 
-@description('Array of Azure regions.')
-param parLocations array = [
-  deployment().location
-]
-
-@description('Global resource lock settings.')
-param parGlobalResourceLock lockType = {
-  name: 'GlobalResourceLock'
-  kind: 'None'
-  notes: 'This lock was created by the ALZ Bicep Accelerator.'
-}
-
 @description('Tags to apply to all resources.')
 param parTags object = {}
 
@@ -120,9 +102,6 @@ param parHubNetworkingResourceGroupNamePrefix string = 'rg-alz-conn'
 
 @description('Resource group name prefix for private DNS zones.')
 param parDnsResourceGroupNamePrefix string = 'rg-alz-dns'
-
-@description('Resource group name prefix for DNS Private Resolver.')
-param parDnsPrivateResolverResourceGroupNamePrefix string = 'rg-alz-dnspr'
 
 @description('Array of hub network configurations.')
 param hubNetworks hubNetworkType[] = []
@@ -217,12 +196,12 @@ module dnsResourceGroups 'br/public:avm/res/resources/resource-group:0.4.1' = [f
 }]
 
 // DDoS Protection Plans
-module ddosProtectionPlans 'br/public:avm/res/network/ddos-protection-plan:0.3.0' = [for (hub, i) in hubNetworks: if (hub.ddosProtectionPlanSettings.?deployDdosProtectionPlan ?? false) {
+module ddosProtectionPlans 'br/public:avm/res/network/ddos-protection-plan:0.3.0' = [for (hub, i) in hubNetworks: if (hub.?ddosProtectionPlanSettings.?deployDdosProtectionPlan ?? false) {
   name: 'alz-ddos-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubNetworkingResourceGroups ]
   params: {
-    name: hub.ddosProtectionPlanSettings.?name ?? 'ddos-alz-${hub.location}'
+    name: hub.?ddosProtectionPlanSettings.?name ?? 'ddos-alz-${hub.location}'
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
@@ -239,7 +218,7 @@ module hubVirtualNetworks 'br/public:avm/res/network/virtual-network:0.5.1' = [f
     location: hub.location
     tags: parTags
     addressPrefixes: hub.addressPrefixes
-    dnsServers: hub.dnsServers ?? []
+    dnsServers: hub.?dnsServers ?? []
     enableTelemetry: parEnableTelemetry
     subnets: [for subnet in hub.subnets: {
       name: subnet.name
@@ -267,80 +246,80 @@ module hubVnetPeerings 'modules/vnet-peering.bicep' = [for (peering, i) in varHu
 }]
 
 // Firewall Policies (mit Basis-Regelwerk) fuer alle Hubs mit Azure Firewall
-module firewallPolicies 'modules/firewall-policy.bicep' = [for (hub, i) in hubNetworks: if (hub.azureFirewallSettings.?deployAzureFirewall ?? false) {
+module firewallPolicies 'modules/firewall-policy.bicep' = [for (hub, i) in hubNetworks: if (hub.?azureFirewallSettings.?deployAzureFirewall ?? false) {
   name: 'alz-afwp-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubNetworkingResourceGroups ]
   params: {
-    parFirewallPolicyName: hub.azureFirewallSettings.?firewallPolicyName ?? 'afwp-alz-${hub.location}'
+    parFirewallPolicyName: hub.?azureFirewallSettings.?firewallPolicyName ?? 'afwp-alz-${hub.location}'
     parLocation: hub.location
     parTags: parTags
-    parSkuTier: hub.azureFirewallSettings.?azureSkuTier ?? 'Standard'
+    parSkuTier: hub.?azureFirewallSettings.?azureSkuTier ?? 'Standard'
     parInternalAddressSpaces: parInternalAddressSpaces
-    parDeployBaseRules: hub.azureFirewallSettings.?deployBaseFirewallRules ?? true
+    parDeployBaseRules: hub.?azureFirewallSettings.?deployBaseFirewallRules ?? true
   }
 }]
 
 // Azure Firewalls
-module azureFirewalls 'br/public:avm/res/network/azure-firewall:0.5.1' = [for (hub, i) in hubNetworks: if (hub.azureFirewallSettings.?deployAzureFirewall ?? false) {
+module azureFirewalls 'br/public:avm/res/network/azure-firewall:0.5.1' = [for (hub, i) in hubNetworks: if (hub.?azureFirewallSettings.?deployAzureFirewall ?? false) {
   name: 'alz-afw-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubVirtualNetworks ]
   params: {
-    name: hub.azureFirewallSettings.?azureFirewallName ?? 'afw-alz-${hub.location}'
+    name: hub.?azureFirewallSettings.?azureFirewallName ?? 'afw-alz-${hub.location}'
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
     virtualNetworkResourceId: hubVirtualNetworks[i].outputs.resourceId
-    azureSkuTier: hub.azureFirewallSettings.?azureSkuTier ?? 'Standard'
-    firewallPolicyId: firewallPolicies[i].outputs.outFirewallPolicyId
+    azureSkuTier: hub.?azureFirewallSettings.?azureSkuTier ?? 'Standard'
+    firewallPolicyId: firewallPolicies[i].?outputs.?outFirewallPolicyId ?? ''
     publicIPAddressObject: {
-      name: hub.azureFirewallSettings.?publicIPAddressObject.?name ?? 'pip-afw-alz-${hub.location}'
+      name: hub.?azureFirewallSettings.?publicIPAddressObject.?name ?? 'pip-afw-alz-${hub.location}'
     }
-    managementIPAddressObject: hub.azureFirewallSettings.?azureSkuTier == 'Basic' ? {
-      name: hub.azureFirewallSettings.?managementIPAddressObject.?name ?? 'pip-afw-mgmt-alz-${hub.location}'
+    managementIPAddressObject: hub.?azureFirewallSettings.?azureSkuTier == 'Basic' ? {
+      name: hub.?azureFirewallSettings.?managementIPAddressObject.?name ?? 'pip-afw-mgmt-alz-${hub.location}'
     } : null
   }
 }]
 
 // Bastion Hosts
-module bastionHosts 'br/public:avm/res/network/bastion-host:0.8.2' = [for (hub, i) in hubNetworks: if (hub.bastionHostSettings.?deployBastion ?? false) {
+module bastionHosts 'br/public:avm/res/network/bastion-host:0.8.2' = [for (hub, i) in hubNetworks: if (hub.?bastionHostSettings.?deployBastion ?? false) {
   name: 'alz-bas-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubVirtualNetworks ]
   params: {
-    name: hub.bastionHostSettings.?bastionHostSettingsName ?? 'bas-alz-${hub.location}'
+    name: hub.?bastionHostSettings.?bastionHostSettingsName ?? 'bas-alz-${hub.location}'
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
     virtualNetworkResourceId: hubVirtualNetworks[i].outputs.resourceId
-    skuName: hub.bastionHostSettings.?skuName ?? 'Standard'
+    skuName: hub.?bastionHostSettings.?skuName ?? 'Standard'
   }
 }]
 
 // VPN Gateways
-module vpnGateways 'br/public:avm/res/network/virtual-network-gateway:0.5.0' = [for (hub, i) in hubNetworks: if (hub.vpnGatewaySettings.?deployVpnGateway ?? false) {
+module vpnGateways 'br/public:avm/res/network/virtual-network-gateway:0.5.0' = [for (hub, i) in hubNetworks: if (hub.?vpnGatewaySettings.?deployVpnGateway ?? false) {
   name: 'alz-vpngw-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubVirtualNetworks ]
   params: {
-    name: hub.vpnGatewaySettings.?name ?? 'vgw-alz-${hub.location}'
+    name: hub.?vpnGatewaySettings.?name ?? 'vgw-alz-${hub.location}'
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
     vNetResourceId: hubVirtualNetworks[i].outputs.resourceId
     gatewayType: 'Vpn'
-    skuName: hub.vpnGatewaySettings.?skuName ?? 'VpnGw1AZ'
-    vpnType: hub.vpnGatewaySettings.?vpnType ?? 'RouteBased'
+    skuName: hub.?vpnGatewaySettings.?skuName ?? 'VpnGw1AZ'
+    vpnType: hub.?vpnGatewaySettings.?vpnType ?? 'RouteBased'
     // vpnMode -> clusterSettings (discriminated union des AVM-Moduls)
-    clusterSettings: (hub.vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activeActiveBgp' ? {
+    clusterSettings: (hub.?vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activeActiveBgp' ? {
       clusterMode: 'activeActiveBgp'
-      asn: hub.vpnGatewaySettings.?asn ?? 65515
-    } : (hub.vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activeActiveNoBgp' ? {
+      asn: hub.?vpnGatewaySettings.?asn ?? 65515
+    } : (hub.?vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activeActiveNoBgp' ? {
       clusterMode: 'activeActiveNoBgp'
-    } : (hub.vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activePassiveBgp' ? {
+    } : (hub.?vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activePassiveBgp' ? {
       clusterMode: 'activePassiveBgp'
-      asn: hub.vpnGatewaySettings.?asn ?? 65515
+      asn: hub.?vpnGatewaySettings.?asn ?? 65515
     } : {
       clusterMode: 'activePassiveNoBgp'
     }
@@ -348,18 +327,18 @@ module vpnGateways 'br/public:avm/res/network/virtual-network-gateway:0.5.0' = [
 }]
 
 // ExpressRoute Gateways
-module expressRouteGateways 'br/public:avm/res/network/virtual-network-gateway:0.5.0' = [for (hub, i) in hubNetworks: if (hub.expressRouteGatewaySettings.?deployExpressRouteGateway ?? false) {
+module expressRouteGateways 'br/public:avm/res/network/virtual-network-gateway:0.5.0' = [for (hub, i) in hubNetworks: if (hub.?expressRouteGatewaySettings.?deployExpressRouteGateway ?? false) {
   name: 'alz-ergw-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubVirtualNetworks ]
   params: {
-    name: hub.expressRouteGatewaySettings.?name ?? 'ergw-alz-${hub.location}'
+    name: hub.?expressRouteGatewaySettings.?name ?? 'ergw-alz-${hub.location}'
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
     vNetResourceId: hubVirtualNetworks[i].outputs.resourceId
     gatewayType: 'ExpressRoute'
-    skuName: hub.expressRouteGatewaySettings.?skuName ?? 'ErGw1AZ'
+    skuName: hub.?expressRouteGatewaySettings.?skuName ?? 'ErGw1AZ'
     clusterSettings: {
       clusterMode: 'activePassiveNoBgp'
     }
@@ -367,7 +346,7 @@ module expressRouteGateways 'br/public:avm/res/network/virtual-network-gateway:0
 }]
 
 // Private DNS Zones (primary hub only)
-module privateDnsZones 'br/public:avm/res/network/private-dns-zone:0.6.0' = [for (zone, i) in varDefaultPrivateDnsZones: if (length(hubNetworks) > 0 && (hubNetworks[0].privateDnsSettings.?deployPrivateDnsZones ?? false)) {
+module privateDnsZones 'br/public:avm/res/network/private-dns-zone:0.6.0' = [for (zone, i) in varDefaultPrivateDnsZones: if (length(hubNetworks) > 0 && (hubNetworks[0].?privateDnsSettings.?deployPrivateDnsZones ?? false)) {
   name: 'alz-pdns-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parDnsResourceGroupNamePrefix}-${hubNetworks[0].location}')
   dependsOn: [ dnsResourceGroups ]
@@ -397,7 +376,7 @@ output outHubVirtualNetworkIds array = [for (hub, i) in hubNetworks: hubVirtualN
 output outHubNetworkingResourceGroupNames array = [for hub in hubNetworks: '${parHubNetworkingResourceGroupNamePrefix}-${hub.location}']
 
 @description('Private IPs der Azure Firewalls je Hub (leerer String, wenn keine Firewall deployed). Wird von Spoke-Templates als Next Hop benoetigt.')
-output outAzureFirewallPrivateIps array = [for (hub, i) in hubNetworks: (hub.azureFirewallSettings.?deployAzureFirewall ?? false) ? azureFirewalls[i].outputs.privateIp : '']
+output outAzureFirewallPrivateIps array = [for (hub, i) in hubNetworks: (hub.?azureFirewallSettings.?deployAzureFirewall ?? false) ? (azureFirewalls[i].?outputs.?privateIp ?? '') : '']
 
 @description('Resource IDs der Firewall Policies je Hub (leerer String, wenn keine Firewall deployed).')
-output outFirewallPolicyIds array = [for (hub, i) in hubNetworks: (hub.azureFirewallSettings.?deployAzureFirewall ?? false) ? firewallPolicies[i].outputs.outFirewallPolicyId : '']
+output outFirewallPolicyIds array = [for (hub, i) in hubNetworks: (hub.?azureFirewallSettings.?deployAzureFirewall ?? false) ? (firewallPolicies[i].?outputs.?outFirewallPolicyId ?? '') : '']

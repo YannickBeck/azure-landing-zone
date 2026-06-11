@@ -113,7 +113,7 @@ module spokeVirtualNetwork 'br/public:avm/res/network/virtual-network:0.5.1' = {
       name: subnet.name
       addressPrefix: subnet.addressPrefix
       delegation: subnet.?delegation
-      routeTableResourceId: (varDeployRouteTable && (subnet.?associateRouteTable ?? true)) ? spokeRouteTable.outputs.outRouteTableId : null
+      routeTableResourceId: (varDeployRouteTable && (subnet.?associateRouteTable ?? true)) ? spokeRouteTable.?outputs.?outRouteTableId : null
     }]
   }
 }
@@ -172,4 +172,4 @@ output outSpokeVirtualNetworkId string = spokeVirtualNetwork.outputs.resourceId
 output outSpokeResourceGroupName string = parSpokeResourceGroupName
 
 @description('Resource ID der Spoke Route Table (leer, wenn keine Firewall-IP angegeben).')
-output outSpokeRouteTableId string = varDeployRouteTable ? spokeRouteTable.outputs.outRouteTableId : ''
+output outSpokeRouteTableId string = varDeployRouteTable ? (spokeRouteTable.?outputs.?outRouteTableId ?? '') : ''
