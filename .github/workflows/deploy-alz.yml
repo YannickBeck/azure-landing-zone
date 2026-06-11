@@ -3,13 +3,13 @@ name: Deploy Azure Landing Zone
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'templates/**'
       - 'config/**'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'templates/**'
   workflow_dispatch:
@@ -76,11 +76,29 @@ jobs:
       - name: Bicep Build - Landing Zones
         run: az bicep build --file templates/core/governance/mgmt-groups/landingzones/main.bicep
 
+      - name: Bicep Build - Sandbox
+        run: az bicep build --file templates/core/governance/mgmt-groups/sandbox/main.bicep
+
+      - name: Bicep Build - Decommissioned
+        run: az bicep build --file templates/core/governance/mgmt-groups/decommissioned/main.bicep
+
+      - name: Bicep Build - RBAC
+        run: az bicep build --file templates/core/governance/rbac/main.bicep
+
+      - name: Bicep Build - Subscription Vending
+        run: az bicep build --file templates/core/subscription-vending/main.bicep
+
       - name: Bicep Build - Logging
         run: az bicep build --file templates/core/logging/main.bicep
 
       - name: Bicep Build - Hub Networking
         run: az bicep build --file templates/networking/hubnetworking/main.bicep
+
+      - name: Bicep Build - Spoke Networking
+        run: az bicep build --file templates/networking/spoke/main.bicep
+
+      - name: Bicep Build - Virtual WAN (Alternative)
+        run: az bicep build --file templates/networking/virtualwan/main.bicep
 
   # ============================================================
   # What-If Preview (runs on PRs or manual with what_if=true)
@@ -179,6 +197,15 @@ jobs:
             --location ${{ env.PRIMARY_LOCATION }} \
             --template-file templates/core/governance/mgmt-groups/decommissioned/main.bicep \
             --parameters templates/core/governance/mgmt-groups/decommissioned/main.bicepparam
+
+      # Leeres parRoleAssignments-Array in main.bicepparam = No-Op
+      - name: Deploy RBAC Role Assignments
+        run: |
+          az deployment tenant create \
+            --name "alz-rbac-${{ github.run_number }}" \
+            --location ${{ env.PRIMARY_LOCATION }} \
+            --template-file templates/core/governance/rbac/main.bicep \
+            --parameters templates/core/governance/rbac/main.bicepparam
 
   # ============================================================
   # Deploy Logging (Management Subscription)

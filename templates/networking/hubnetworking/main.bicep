@@ -32,6 +32,8 @@ type azureFirewallSettingsType = {
   azureSkuTier: ('Basic' | 'Standard' | 'Premium')?
   publicIPAddressObject: { name: string }?
   managementIPAddressObject: { name: string }?
+  firewallPolicyName: string?
+  deployBaseFirewallRules: bool?
 }
 
 type bastionSettingsType = {
@@ -125,6 +127,11 @@ param parDnsPrivateResolverResourceGroupNamePrefix string = 'rg-alz-dnspr'
 @description('Array of hub network configurations.')
 param hubNetworks hubNetworkType[] = []
 
+@description('Interne Quell-Adressbereiche fuer die Basis-Firewall-Regeln.')
+param parInternalAddressSpaces array = [
+  '10.0.0.0/8'
+]
+
 // ================ //
 // Variables
 // ================ //
@@ -167,6 +174,21 @@ var varDefaultPrivateDnsZones = [
   'privatelink.redis.cache.windows.net'
   'privatelink.openai.azure.com'
 ]
+
+// Lookup: VNet-Name -> Location (zur Aufloesung der Remote-Resource-Group beim Peering)
+var varHubLocationByVnetName = toObject(hubNetworks, hub => hub.name, hub => hub.location)
+
+// Alle Hub-Peerings flach: ein Eintrag je (Hub, peeringSetting)
+var varHubPeerings = flatten([for hub in hubNetworks: [for peering in (hub.?peeringSettings ?? []): {
+  enabled: hub.?deployPeering ?? false
+  localVnetName: hub.name
+  localLocation: hub.location
+  remoteVnetName: peering.remoteVirtualNetworkName
+  allowForwardedTraffic: peering.?allowForwardedTraffic ?? true
+  allowGatewayTransit: peering.?allowGatewayTransit ?? false
+  allowVirtualNetworkAccess: peering.?allowVirtualNetworkAccess ?? true
+  useRemoteGateways: peering.?useRemoteGateways ?? false
+}]])
 
 // ================ //
 // Modules
@@ -226,6 +248,38 @@ module hubVirtualNetworks 'br/public:avm/res/network/virtual-network:0.5.1' = [f
   }
 }]
 
+// VNet Peering zwischen den Hubs (beide Richtungen, je nach peeringSettings)
+@batchSize(1)
+module hubVnetPeerings 'modules/vnet-peering.bicep' = [for (peering, i) in varHubPeerings: if (peering.enabled) {
+  name: 'alz-hub-peer-${i}-${uniqueString(deployment().name)}'
+  scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${peering.localLocation}')
+  dependsOn: [ hubVirtualNetworks ]
+  params: {
+    parLocalVnetName: peering.localVnetName
+    parPeeringName: 'peer-${peering.localVnetName}-to-${peering.remoteVnetName}'
+    parRemoteVnetId: resourceId('${parHubNetworkingResourceGroupNamePrefix}-${varHubLocationByVnetName[peering.remoteVnetName]}', 'Microsoft.Network/virtualNetworks', peering.remoteVnetName)
+    parAllowForwardedTraffic: peering.allowForwardedTraffic
+    parAllowGatewayTransit: peering.allowGatewayTransit
+    parAllowVirtualNetworkAccess: peering.allowVirtualNetworkAccess
+    parUseRemoteGateways: peering.useRemoteGateways
+  }
+}]
+
+// Firewall Policies (mit Basis-Regelwerk) fuer alle Hubs mit Azure Firewall
+module firewallPolicies 'modules/firewall-policy.bicep' = [for (hub, i) in hubNetworks: if (hub.azureFirewallSettings.?deployAzureFirewall ?? false) {
+  name: 'alz-afwp-${i}-${uniqueString(deployment().name)}'
+  scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
+  dependsOn: [ hubNetworkingResourceGroups ]
+  params: {
+    parFirewallPolicyName: hub.azureFirewallSettings.?firewallPolicyName ?? 'afwp-alz-${hub.location}'
+    parLocation: hub.location
+    parTags: parTags
+    parSkuTier: hub.azureFirewallSettings.?azureSkuTier ?? 'Standard'
+    parInternalAddressSpaces: parInternalAddressSpaces
+    parDeployBaseRules: hub.azureFirewallSettings.?deployBaseFirewallRules ?? true
+  }
+}]
+
 // Azure Firewalls
 module azureFirewalls 'br/public:avm/res/network/azure-firewall:0.5.1' = [for (hub, i) in hubNetworks: if (hub.azureFirewallSettings.?deployAzureFirewall ?? false) {
   name: 'alz-afw-${i}-${uniqueString(deployment().name)}'
@@ -238,6 +292,7 @@ module azureFirewalls 'br/public:avm/res/network/azure-firewall:0.5.1' = [for (h
     enableTelemetry: parEnableTelemetry
     virtualNetworkResourceId: hubVirtualNetworks[i].outputs.resourceId
     azureSkuTier: hub.azureFirewallSettings.?azureSkuTier ?? 'Standard'
+    firewallPolicyId: firewallPolicies[i].outputs.outFirewallPolicyId
     publicIPAddressObject: {
       name: hub.azureFirewallSettings.?publicIPAddressObject.?name ?? 'pip-afw-alz-${hub.location}'
     }
@@ -327,3 +382,9 @@ output outHubVirtualNetworkIds array = [for (hub, i) in hubNetworks: hubVirtualN
 
 @description('Array of hub networking resource group names.')
 output outHubNetworkingResourceGroupNames array = [for hub in hubNetworks: '${parHubNetworkingResourceGroupNamePrefix}-${hub.location}']
+
+@description('Private IPs der Azure Firewalls je Hub (leerer String, wenn keine Firewall deployed). Wird von Spoke-Templates als Next Hop benoetigt.')
+output outAzureFirewallPrivateIps array = [for (hub, i) in hubNetworks: (hub.azureFirewallSettings.?deployAzureFirewall ?? false) ? azureFirewalls[i].outputs.privateIp : '']
+
+@description('Resource IDs der Firewall Policies je Hub (leerer String, wenn keine Firewall deployed).')
+output outFirewallPolicyIds array = [for (hub, i) in hubNetworks: (hub.azureFirewallSettings.?deployAzureFirewall ?? false) ? firewallPolicies[i].outputs.outFirewallPolicyId : '']

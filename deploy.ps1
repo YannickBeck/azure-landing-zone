@@ -13,12 +13,15 @@
 #   .\deploy.ps1 -TenantId "<YOUR_TENANT_ID>"
 #
 # REIHENFOLGE der Deployments:
-#   1. Int-Root Management Group (Tenant-Scope)
+#   1. Int-Root Management Group inkl. Policy-Guardrails (Tenant-Scope)
 #   2. Platform Management Groups (Tenant-Scope)
-#   3. Landing Zones Management Groups (Tenant-Scope)
+#   3. Landing Zones Management Groups inkl. Corp-Policies (Tenant-Scope)
 #   4. Sandbox + Decommissioned Management Groups (Tenant-Scope)
-#   5. Logging (Management Subscription-Scope)
-#   6. Hub Networking (Connectivity Subscription-Scope)
+#   5. RBAC Role Assignments auf Management Groups (Tenant-Scope)
+#   6. Logging (Management Subscription-Scope)
+#   7. Hub Networking inkl. Firewall Policy + Peering (Connectivity Subscription-Scope)
+#   8. Optional: Spoke Networking (-DeploySpoke, Workload Subscription-Scope)
+#   9. Optional: Subscription Vending (-DeploySubscriptionVending, MG-Scope)
 # =============================================================================
 
 [CmdletBinding()]
@@ -38,6 +41,20 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]$PrimaryLocation = "germanywestcentral",
+
+    [Parameter(Mandatory = $false)]
+    [string]$IntRootMgId = "alz",
+
+    # Optional: Spoke-Netzwerk in einer Workload Subscription deployen
+    [Parameter(Mandatory = $false)]
+    [switch]$DeploySpoke,
+
+    [Parameter(Mandatory = $false)]
+    [string]$WorkloadSubscriptionId = "",
+
+    # Optional: Subscription Vending (siehe templates/core/subscription-vending)
+    [Parameter(Mandatory = $false)]
+    [switch]$DeploySubscriptionVending,
 
     [Parameter(Mandatory = $false)]
     [switch]$WhatIf
@@ -166,6 +183,22 @@ if ($DeploymentScope -in @("All", "ManagementGroups")) {
         @DeployArgs `
         --output json 2>&1 | Out-Null
     Write-OK "Decommissioned MG deployed"
+
+    # 1f) RBAC Role Assignments (leeres Array in main.bicepparam = No-Op)
+    Write-Step "1f) RBAC Role Assignments auf Management Groups..."
+    $result = az deployment tenant create `
+        --name "alz-rbac-$Timestamp" `
+        --location $PrimaryLocation `
+        --template-file "$ScriptRoot\templates\core\governance\rbac\main.bicep" `
+        --parameters "$ScriptRoot\templates\core\governance\rbac\main.bicepparam" `
+        @DeployArgs `
+        --output json 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail "RBAC Deployment fehlgeschlagen: $result"
+        exit 1
+    }
+    Write-OK "RBAC Role Assignments deployed"
 }
 
 # ============================================================
@@ -215,7 +248,62 @@ if ($DeploymentScope -in @("All", "Networking") -and $ConnectivitySubscriptionId
         Write-Fail "Hub Networking Deployment fehlgeschlagen: $result"
         exit 1
     }
-    Write-OK "Hub VNets, Azure Firewall, Bastion, Private DNS Zones deployed"
+    Write-OK "Hub VNets, Firewall Policy, Azure Firewall, Bastion, Peering, Private DNS Zones deployed"
+}
+
+# ============================================================
+# Step 4 (optional): Spoke Networking (Workload Subscription)
+# ============================================================
+if ($DeploySpoke) {
+
+    if (-not $WorkloadSubscriptionId) {
+        Write-Fail "-DeploySpoke erfordert -WorkloadSubscriptionId"
+        exit 1
+    }
+
+    Write-Header "Step 4: Spoke Networking deployen (optional)"
+    Write-Step "Spoke in Workload Subscription: $WorkloadSubscriptionId"
+    Write-Step "Hinweis: templates\networking\spoke\main.bicepparam vorher anpassen (Hub-VNet-ID, Firewall-IP)"
+
+    az account set --subscription $WorkloadSubscriptionId
+
+    $result = az deployment sub create `
+        --name "alz-spoke-$Timestamp" `
+        --location $PrimaryLocation `
+        --template-file "$ScriptRoot\templates\networking\spoke\main.bicep" `
+        --parameters "$ScriptRoot\templates\networking\spoke\main.bicepparam" `
+        @DeployArgs `
+        --output json 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail "Spoke Networking Deployment fehlgeschlagen: $result"
+        exit 1
+    }
+    Write-OK "Spoke VNet, Route Table und Hub-Peering deployed"
+}
+
+# ============================================================
+# Step 5 (optional): Subscription Vending (Management-Group-Scope)
+# ============================================================
+if ($DeploySubscriptionVending) {
+
+    Write-Header "Step 5: Subscription Vending (optional)"
+    Write-Step "Hinweis: templates\core\subscription-vending\main.bicepparam vorher anpassen (Subscription-ID/Billing-Scope, Ziel-MG)"
+
+    $result = az deployment mg create `
+        --name "alz-sub-vending-$Timestamp" `
+        --management-group-id $IntRootMgId `
+        --location $PrimaryLocation `
+        --template-file "$ScriptRoot\templates\core\subscription-vending\main.bicep" `
+        --parameters "$ScriptRoot\templates\core\subscription-vending\main.bicepparam" `
+        @DeployArgs `
+        --output json 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail "Subscription Vending Deployment fehlgeschlagen: $result"
+        exit 1
+    }
+    Write-OK "Subscription erstellt/platziert"
 }
 
 Write-Header "Deployment abgeschlossen!"
@@ -225,11 +313,13 @@ Naechste Schritte:
   1. Azure Portal: Management Groups ueberpruefen
      https://portal.azure.com/#view/Microsoft_Azure_ManagementGroups
 
-  2. Policy-Compliance pruefen:
+  2. Policy-Compliance pruefen (Deny-Location, Require-RG-Tag, Deny-Storage-Http, Deny-NIC-PublicIP):
      https://portal.azure.com/#view/Microsoft_Azure_Policy/PolicyMenuBlade/~/Compliance
 
-  3. Spoke VNets in Workload-Subscriptions erstellen und mit Hub peeren
+  3. Workload-Subscriptions platzieren: .\deploy.ps1 ... -DeploySubscriptionVending
 
-  4. GitHub Repository: https://github.com/Azure/Azure-Landing-Zones
+  4. Spoke VNets deployen: .\deploy.ps1 ... -DeploySpoke -WorkloadSubscriptionId <SUB_ID>
+
+  5. GitHub Repository: https://github.com/Azure/Azure-Landing-Zones
 
 "@ -ForegroundColor Cyan

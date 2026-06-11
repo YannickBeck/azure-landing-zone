@@ -20,9 +20,5 @@
         "modulePath": "bicep"
       }
     }
-  },
-  "experimentalFeaturesEnabled": {
-    "userDefinedTypes": true,
-    "extensibility": false
   }
 }
