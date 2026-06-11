@@ -45,8 +45,8 @@ type bastionSettingsType = {
 type vpnGatewaySettingsType = {
   deployVpnGateway: bool
   name: string?
-  skuName: string?
-  vpnMode: ('activePolicyBased' | 'activeActiveBgp' | 'activeActiveNoBgp')?
+  skuName: ('Basic' | 'VpnGw1' | 'VpnGw1AZ' | 'VpnGw2' | 'VpnGw2AZ' | 'VpnGw3' | 'VpnGw3AZ' | 'VpnGw4' | 'VpnGw4AZ' | 'VpnGw5' | 'VpnGw5AZ')?
+  vpnMode: ('activeActiveBgp' | 'activeActiveNoBgp' | 'activePassiveBgp' | 'activePassiveNoBgp')?
   vpnType: ('RouteBased' | 'PolicyBased')?
   asn: int?
 }
@@ -54,7 +54,7 @@ type vpnGatewaySettingsType = {
 type erGatewaySettingsType = {
   deployExpressRouteGateway: bool
   name: string?
-  skuName: string?
+  skuName: ('Standard' | 'HighPerformance' | 'UltraPerformance' | 'ErGw1AZ' | 'ErGw2AZ' | 'ErGw3AZ')?
 }
 
 type privateDnsSettingsType = {
@@ -178,8 +178,9 @@ var varDefaultPrivateDnsZones = [
 // Lookup: VNet-Name -> Location (zur Aufloesung der Remote-Resource-Group beim Peering)
 var varHubLocationByVnetName = toObject(hubNetworks, hub => hub.name, hub => hub.location)
 
-// Alle Hub-Peerings flach: ein Eintrag je (Hub, peeringSetting)
-var varHubPeerings = flatten([for hub in hubNetworks: [for peering in (hub.?peeringSettings ?? []): {
+// Alle Hub-Peerings flach: ein Eintrag je (Hub, peeringSetting).
+// map/flatten statt verschachtelter For-Expressions (BCP138).
+var varHubPeerings = flatten(map(hubNetworks, hub => map(hub.?peeringSettings ?? [], peering => {
   enabled: hub.?deployPeering ?? false
   localVnetName: hub.name
   localLocation: hub.location
@@ -188,7 +189,7 @@ var varHubPeerings = flatten([for hub in hubNetworks: [for peering in (hub.?peer
   allowGatewayTransit: peering.?allowGatewayTransit ?? false
   allowVirtualNetworkAccess: peering.?allowVirtualNetworkAccess ?? true
   useRemoteGateways: peering.?useRemoteGateways ?? false
-}]])
+})))
 
 // ================ //
 // Modules
@@ -303,7 +304,7 @@ module azureFirewalls 'br/public:avm/res/network/azure-firewall:0.5.1' = [for (h
 }]
 
 // Bastion Hosts
-module bastionHosts 'br/public:avm/res/network/bastion-host:0.4.1' = [for (hub, i) in hubNetworks: if (hub.bastionHostSettings.?deployBastion ?? false) {
+module bastionHosts 'br/public:avm/res/network/bastion-host:0.8.2' = [for (hub, i) in hubNetworks: if (hub.bastionHostSettings.?deployBastion ?? false) {
   name: 'alz-bas-${i}-${uniqueString(deployment().name)}'
   scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
   dependsOn: [ hubVirtualNetworks ]
@@ -327,13 +328,22 @@ module vpnGateways 'br/public:avm/res/network/virtual-network-gateway:0.5.0' = [
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
-    virtualNetworkResourceId: hubVirtualNetworks[i].outputs.resourceId
+    vNetResourceId: hubVirtualNetworks[i].outputs.resourceId
     gatewayType: 'Vpn'
     skuName: hub.vpnGatewaySettings.?skuName ?? 'VpnGw1AZ'
     vpnType: hub.vpnGatewaySettings.?vpnType ?? 'RouteBased'
-    activeActive: (hub.vpnGatewaySettings.?vpnMode ?? '') == 'activeActiveBgp'
-    enableBgp: contains(hub.vpnGatewaySettings.?vpnMode ?? '', 'Bgp')
-    asn: hub.vpnGatewaySettings.?asn ?? 65515
+    // vpnMode -> clusterSettings (discriminated union des AVM-Moduls)
+    clusterSettings: (hub.vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activeActiveBgp' ? {
+      clusterMode: 'activeActiveBgp'
+      asn: hub.vpnGatewaySettings.?asn ?? 65515
+    } : (hub.vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activeActiveNoBgp' ? {
+      clusterMode: 'activeActiveNoBgp'
+    } : (hub.vpnGatewaySettings.?vpnMode ?? 'activeActiveBgp') == 'activePassiveBgp' ? {
+      clusterMode: 'activePassiveBgp'
+      asn: hub.vpnGatewaySettings.?asn ?? 65515
+    } : {
+      clusterMode: 'activePassiveNoBgp'
+    }
   }
 }]
 
@@ -347,9 +357,12 @@ module expressRouteGateways 'br/public:avm/res/network/virtual-network-gateway:0
     location: hub.location
     tags: parTags
     enableTelemetry: parEnableTelemetry
-    virtualNetworkResourceId: hubVirtualNetworks[i].outputs.resourceId
+    vNetResourceId: hubVirtualNetworks[i].outputs.resourceId
     gatewayType: 'ExpressRoute'
     skuName: hub.expressRouteGatewaySettings.?skuName ?? 'ErGw1AZ'
+    clusterSettings: {
+      clusterMode: 'activePassiveNoBgp'
+    }
   }
 }]
 
