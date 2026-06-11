@@ -51,19 +51,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Azure CLI
-        uses: azure/setup-azure-cli@v1
-        with:
-          version: ${{ env.AZURE_CLI_VERSION }}
-
-      - name: Login to Azure (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
-          enable-AzPSSession: false
-
+      # Azure CLI ist auf ubuntu-latest vorinstalliert. bicep build benoetigt
+      # kein Azure-Login (AVM-Module werden anonym aus der oeffentlichen MCR
+      # restored), daher laeuft die statische Validierung ohne Secrets.
       - name: Upgrade Bicep
         run: az bicep upgrade
 
@@ -112,7 +102,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # OIDC-Secrets pruefen: ohne Konfiguration wird der What-If sauber
+      # uebersprungen (Job bleibt gruen), statt am Azure-Login zu scheitern.
+      - name: Check Azure OIDC secrets
+        id: secrets
+        run: |
+          if [ -n "${{ secrets.AZURE_CLIENT_ID }}" ] && [ -n "${{ secrets.AZURE_TENANT_ID }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Azure OIDC-Secrets nicht konfiguriert - What-If wird uebersprungen."
+          fi
+
       - name: Login to Azure (OIDC)
+        if: steps.secrets.outputs.ready == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -120,9 +123,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
 
       - name: Upgrade Bicep
+        if: steps.secrets.outputs.ready == 'true'
         run: az bicep upgrade
 
       - name: What-If Management Groups
+        if: steps.secrets.outputs.ready == 'true'
         run: |
           az deployment tenant create \
             --name "alz-introot-whatif-${{ github.run_number }}" \
