@@ -269,6 +269,13 @@ Policy- und Role-Assignments.
 - Identity-Ressourcen (AD DS / Entra Connect) in `alz-platform-identity`
 - VPN/ExpressRoute-Gateways & DDoS-Plan (Schalter vorhanden, kosten-/bedarfsgetrieben)
 
+## Smoke Run
+
+Ein gestaffeltes Runbook für eine minimal-invasive End-to-End-Prüfung (What-If →
+Management Groups → Logging → Networking, inkl. Verifikation, Kosten und Teardown)
+liegt unter **[`docs/SMOKE-RUN.md`](docs/SMOKE-RUN.md)**. Die statische Stufe
+(`bicep build` aller Templates) läuft bereits in der CI.
+
 ## Referenzen
 
 - [Azure Landing Zones Dokumentation](https://azure.github.io/Azure-Landing-Zones/)
