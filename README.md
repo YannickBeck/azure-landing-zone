@@ -220,20 +220,17 @@ Die Pipeline in `.github/workflows/deploy-alz.yml` triggert auf Push/PR gegen
 
 ### OIDC Federated Identity einrichten
 
-```bash
-# Service Principal erstellen
-az ad sp create-for-rbac --name "sp-alz-deployment" --role Owner \
-  --scopes /providers/Microsoft.Management/managementGroups/<ROOT_MG>
+Die Pipeline meldet sich passwortlos per OpenID Connect an Azure an. Das einmalige
+Setup (App-Registrierung, **drei** Federated Credentials für `pull_request`,
+`environment:production` und `ref:master`, RBAC, die vier Secrets und das
+Environment `production`) ist vollständig dokumentiert in
+**[`docs/OIDC-SETUP.md`](docs/OIDC-SETUP.md)** und automatisiert über
+[`scripts/setup-oidc.sh`](scripts/setup-oidc.sh):
 
-# Federated Identity für GitHub Actions konfigurieren
-az ad app federated-credential create \
-  --id "<APP_ID>" \
-  --parameters '{
-    "name": "github-alz",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "subject": "repo:<OWNER>/<REPO>:ref:refs/heads/main",
-    "audiences": ["api://AzureADTokenExchange"]
-  }'
+```bash
+ORG=YannickBeck REPO=azure-landing-zone \
+TENANT_ID=<...> MGMT_SUB=<...> CONN_SUB=<...> \
+./scripts/setup-oidc.sh
 ```
 
 ## Module (Azure Verified Modules)
