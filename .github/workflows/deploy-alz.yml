@@ -106,13 +106,20 @@ jobs:
       # uebersprungen (Job bleibt gruen), statt am Azure-Login zu scheitern.
       - name: Check Azure OIDC secrets
         id: secrets
+        env:
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          MGMT_SUB: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          CONN_SUB: ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
         run: |
-          if [ -n "${{ secrets.AZURE_CLIENT_ID }}" ] && [ -n "${{ secrets.AZURE_TENANT_ID }}" ]; then
+          if [ -n "$CLIENT_ID" ] && [ -n "$TENANT_ID" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Azure OIDC-Secrets nicht konfiguriert - What-If wird uebersprungen."
           fi
+          [ -n "$MGMT_SUB" ] && echo "mgmt_ready=true" >> "$GITHUB_OUTPUT" || echo "mgmt_ready=false" >> "$GITHUB_OUTPUT"
+          [ -n "$CONN_SUB" ] && echo "conn_ready=true" >> "$GITHUB_OUTPUT" || echo "conn_ready=false" >> "$GITHUB_OUTPUT"
 
       - name: Login to Azure (OIDC)
         if: steps.secrets.outputs.ready == 'true'
@@ -134,6 +141,28 @@ jobs:
             --location ${{ env.PRIMARY_LOCATION }} \
             --template-file templates/core/governance/mgmt-groups/int-root/main.bicep \
             --parameters templates/core/governance/mgmt-groups/int-root/main.bicepparam \
+            --what-if
+
+      - name: What-If Logging
+        if: steps.secrets.outputs.ready == 'true' && steps.secrets.outputs.mgmt_ready == 'true'
+        run: |
+          az account set --subscription ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          az deployment sub create \
+            --name "alz-logging-whatif-${{ github.run_number }}" \
+            --location ${{ env.PRIMARY_LOCATION }} \
+            --template-file templates/core/logging/main.bicep \
+            --parameters templates/core/logging/main.bicepparam \
+            --what-if
+
+      - name: What-If Hub Networking
+        if: steps.secrets.outputs.ready == 'true' && steps.secrets.outputs.conn_ready == 'true'
+        run: |
+          az account set --subscription ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
+          az deployment sub create \
+            --name "alz-hubnetworking-whatif-${{ github.run_number }}" \
+            --location ${{ env.PRIMARY_LOCATION }} \
+            --template-file templates/networking/hubnetworking/main.bicep \
+            --parameters templates/networking/hubnetworking/main.bicepparam \
             --what-if
 
   # ============================================================
