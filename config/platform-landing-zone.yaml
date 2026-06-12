@@ -93,6 +93,28 @@ logging:
     deploy: false                     # Auf true setzen wenn benötigt
     name: "aa-alz-germanywestcentral"
 
+# Governance: Schlankes Policy-Set (Built-in Assignments)
+governance:
+  policies:
+    allowedLocations:                 # Deny-Location @ alz
+      - germanywestcentral
+      - northeurope
+    requiredTagName: "Environment"    # Require-RG-Tag @ alz (leer = aus)
+    storageSecureTransferEffect: Deny # Deny-Storage-Http @ alz (Audit | Deny | Disabled)
+    denyNicPublicIpOnCorp: true       # Deny-NIC-PublicIP @ alz-landingzones-corp
+  rbac:
+    # Role Assignments werden in templates/core/governance/rbac/main.bicepparam gepflegt.
+    # Beispiel:
+    # - managementGroupId: alz-platform
+    #   principalId: "<ENTRA_GROUP_OBJECT_ID>"
+    #   roleDefinition: Owner
+
+# Subscription Vending (optional, siehe templates/core/subscription-vending)
+subscriptionVending:
+  enabled: false
+  mode: placement                     # placement | create (create erfordert EA/MCA-Billing-Rolle)
+  targetManagementGroup: alz-landingzones-corp
+
 # Netzwerk-Konfiguration
 networking:
   type: hubNetworking                 # hubNetworking | virtualWan | none
@@ -105,6 +127,9 @@ networking:
       azureFirewall:
         deploy: true
         sku: Standard
+        firewallPolicy:
+          name: "afwp-alz-germanywestcentral"
+          baseRules: true             # DNS/NTP/AzureCloud/Windows-Update, Rest = Deny
       bastion:
         deploy: true
       vpnGateway:
@@ -124,6 +149,14 @@ networking:
         deploy: false
       bastion:
         deploy: false
+
+  # Spoke-Netzwerke je Workload (templates/networking/spoke, optional)
+  spoke:
+    example:
+      workloadName: corp-app01
+      location: germanywestcentral
+      addressPrefix: "10.2.0.0/24"   # Kein Overlap mit den Hubs!
+      firewallTransit: true           # Default-Route ueber die Hub-Firewall
 
 # Kontaktinformationen für Policies
 contacts:

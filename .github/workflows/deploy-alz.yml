@@ -3,13 +3,13 @@ name: Deploy Azure Landing Zone
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'templates/**'
       - 'config/**'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'templates/**'
   workflow_dispatch:
@@ -51,19 +51,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Azure CLI
-        uses: azure/setup-azure-cli@v1
-        with:
-          version: ${{ env.AZURE_CLI_VERSION }}
-
-      - name: Login to Azure (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
-          enable-AzPSSession: false
-
+      # Azure CLI ist auf ubuntu-latest vorinstalliert. bicep build benoetigt
+      # kein Azure-Login (AVM-Module werden anonym aus der oeffentlichen MCR
+      # restored), daher laeuft die statische Validierung ohne Secrets.
       - name: Upgrade Bicep
         run: az bicep upgrade
 
@@ -76,11 +66,29 @@ jobs:
       - name: Bicep Build - Landing Zones
         run: az bicep build --file templates/core/governance/mgmt-groups/landingzones/main.bicep
 
+      - name: Bicep Build - Sandbox
+        run: az bicep build --file templates/core/governance/mgmt-groups/sandbox/main.bicep
+
+      - name: Bicep Build - Decommissioned
+        run: az bicep build --file templates/core/governance/mgmt-groups/decommissioned/main.bicep
+
+      - name: Bicep Build - RBAC
+        run: az bicep build --file templates/core/governance/rbac/main.bicep
+
+      - name: Bicep Build - Subscription Vending
+        run: az bicep build --file templates/core/subscription-vending/main.bicep
+
       - name: Bicep Build - Logging
         run: az bicep build --file templates/core/logging/main.bicep
 
       - name: Bicep Build - Hub Networking
         run: az bicep build --file templates/networking/hubnetworking/main.bicep
+
+      - name: Bicep Build - Spoke Networking
+        run: az bicep build --file templates/networking/spoke/main.bicep
+
+      - name: Bicep Build - Virtual WAN (Alternative)
+        run: az bicep build --file templates/networking/virtualwan/main.bicep
 
   # ============================================================
   # What-If Preview (runs on PRs or manual with what_if=true)
@@ -94,7 +102,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # OIDC-Secrets pruefen: ohne Konfiguration wird der What-If sauber
+      # uebersprungen (Job bleibt gruen), statt am Azure-Login zu scheitern.
+      - name: Check Azure OIDC secrets
+        id: secrets
+        env:
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          MGMT_SUB: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          CONN_SUB: ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
+        run: |
+          if [ -n "$CLIENT_ID" ] && [ -n "$TENANT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Azure OIDC-Secrets nicht konfiguriert - What-If wird uebersprungen."
+          fi
+          [ -n "$MGMT_SUB" ] && echo "mgmt_ready=true" >> "$GITHUB_OUTPUT" || echo "mgmt_ready=false" >> "$GITHUB_OUTPUT"
+          [ -n "$CONN_SUB" ] && echo "conn_ready=true" >> "$GITHUB_OUTPUT" || echo "conn_ready=false" >> "$GITHUB_OUTPUT"
+
       - name: Login to Azure (OIDC)
+        if: steps.secrets.outputs.ready == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -102,9 +130,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
 
       - name: Upgrade Bicep
+        if: steps.secrets.outputs.ready == 'true'
         run: az bicep upgrade
 
       - name: What-If Management Groups
+        if: steps.secrets.outputs.ready == 'true'
         run: |
           az deployment tenant create \
             --name "alz-introot-whatif-${{ github.run_number }}" \
@@ -113,18 +143,65 @@ jobs:
             --parameters templates/core/governance/mgmt-groups/int-root/main.bicepparam \
             --what-if
 
+      - name: What-If Logging
+        if: steps.secrets.outputs.ready == 'true' && steps.secrets.outputs.mgmt_ready == 'true'
+        run: |
+          az account set --subscription ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          az deployment sub create \
+            --name "alz-logging-whatif-${{ github.run_number }}" \
+            --location ${{ env.PRIMARY_LOCATION }} \
+            --template-file templates/core/logging/main.bicep \
+            --parameters templates/core/logging/main.bicepparam \
+            --what-if
+
+      - name: What-If Hub Networking
+        if: steps.secrets.outputs.ready == 'true' && steps.secrets.outputs.conn_ready == 'true'
+        run: |
+          az account set --subscription ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
+          az deployment sub create \
+            --name "alz-hubnetworking-whatif-${{ github.run_number }}" \
+            --location ${{ env.PRIMARY_LOCATION }} \
+            --template-file templates/networking/hubnetworking/main.bicep \
+            --parameters templates/networking/hubnetworking/main.bicepparam \
+            --what-if
+
+  # ============================================================
+  # Preflight: Azure OIDC-Secrets vorhanden? Gated die Deploy-Jobs,
+  # damit ein Push auf master ohne Secrets sauber uebersprungen wird
+  # (statt am azure/login zu scheitern).
+  # ============================================================
+  preflight:
+    name: Preflight (secrets check)
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check Azure OIDC secrets
+        id: check
+        env:
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          if [ -n "$CLIENT_ID" ] && [ -n "$TENANT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Azure OIDC-Secrets nicht konfiguriert - Deploy-Jobs werden uebersprungen."
+          fi
+
   # ============================================================
   # Deploy Management Groups (Tenant-Scope)
   # ============================================================
   deploy-management-groups:
     name: Deploy Management Groups
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, preflight]
     if: |
+      needs.preflight.outputs.ready == 'true' && (
       github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' &&
        github.event.inputs.what_if != 'true' &&
-       (github.event.inputs.deployment_scope == 'All' || github.event.inputs.deployment_scope == 'ManagementGroups'))
+       (github.event.inputs.deployment_scope == 'All' || github.event.inputs.deployment_scope == 'ManagementGroups')))
     environment: production
     steps:
       - name: Checkout repository
@@ -179,6 +256,15 @@ jobs:
             --location ${{ env.PRIMARY_LOCATION }} \
             --template-file templates/core/governance/mgmt-groups/decommissioned/main.bicep \
             --parameters templates/core/governance/mgmt-groups/decommissioned/main.bicepparam
+
+      # Leeres parRoleAssignments-Array in main.bicepparam = No-Op
+      - name: Deploy RBAC Role Assignments
+        run: |
+          az deployment tenant create \
+            --name "alz-rbac-${{ github.run_number }}" \
+            --location ${{ env.PRIMARY_LOCATION }} \
+            --template-file templates/core/governance/rbac/main.bicep \
+            --parameters templates/core/governance/rbac/main.bicepparam
 
   # ============================================================
   # Deploy Logging (Management Subscription)

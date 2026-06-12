@@ -76,3 +76,6 @@ output outVirtualWanId string = virtualWan.outputs.resourceId
 
 @description('The Virtual WAN resource group name.')
 output outVwanResourceGroupName string = parVwanResourceGroupName
+
+@description('Anzahl konfigurierter Virtual Hubs (Erweiterungspunkt fuer den vHub-/Secured-Hub-Ausbau).')
+output outConfiguredVirtualHubCount int = length(vHubs)
