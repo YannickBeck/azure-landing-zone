@@ -56,6 +56,13 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$DeploySubscriptionVending,
 
+    # Optional: Security Baseline (Defender for Cloud, Security Contacts, Activity-Log -> LAW)
+    [Parameter(Mandatory = $false)]
+    [switch]$DeploySecurity,
+
+    [Parameter(Mandatory = $false)]
+    [string]$SecurityContactEmail = "",
+
     [Parameter(Mandatory = $false)]
     [switch]$WhatIf
 )
@@ -304,6 +311,41 @@ if ($DeploySubscriptionVending) {
         exit 1
     }
     Write-OK "Subscription erstellt/platziert"
+}
+
+# ============================================================
+# Step 6 (optional): Security Baseline (je Subscription)
+# Defender for Cloud + Security Contacts + Activity-Log -> LAW
+# ============================================================
+if ($DeploySecurity) {
+
+    Write-Header "Step 6: Security Baseline (optional)"
+
+    # LAW Resource ID fuer Activity-Log-Diagnostics (aus Management-Subscription)
+    if ($ManagementSubscriptionId) {
+        $env:ALZ_LAW_RESOURCE_ID = "/subscriptions/$ManagementSubscriptionId/resourceGroups/rg-alz-logging-$PrimaryLocation/providers/Microsoft.OperationalInsights/workspaces/law-alz-$PrimaryLocation"
+    }
+    $env:ALZ_SECURITY_EMAIL = $SecurityContactEmail
+
+    # Auf alle angegebenen Subscriptions anwenden
+    $securitySubs = @($ManagementSubscriptionId, $ConnectivitySubscriptionId, $WorkloadSubscriptionId) | Where-Object { $_ }
+    foreach ($sub in ($securitySubs | Select-Object -Unique)) {
+        Write-Step "Security Baseline in Subscription: $sub"
+        az account set --subscription $sub
+        $result = az deployment sub create `
+            --name "alz-security-$Timestamp" `
+            --location $PrimaryLocation `
+            --template-file "$ScriptRoot\templates\core\security\main.bicep" `
+            --parameters "$ScriptRoot\templates\core\security\main.bicepparam" `
+            @DeployArgs `
+            --output json 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Fail "Security Deployment fehlgeschlagen ($sub): $result"
+            exit 1
+        }
+        Write-OK "Defender-Plaene, Security Contacts und Activity-Log-Diagnostics deployed ($sub)"
+    }
 }
 
 Write-Header "Deployment abgeschlossen!"

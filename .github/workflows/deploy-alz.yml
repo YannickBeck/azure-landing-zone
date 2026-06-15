@@ -81,6 +81,9 @@ jobs:
       - name: Bicep Build - Logging
         run: az bicep build --file templates/core/logging/main.bicep
 
+      - name: Bicep Build - Security
+        run: az bicep build --file templates/core/security/main.bicep
+
       - name: Bicep Build - Hub Networking
         run: az bicep build --file templates/networking/hubnetworking/main.bicep
 
