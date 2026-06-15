@@ -365,6 +365,32 @@ module privateDnsZones 'br/public:avm/res/network/private-dns-zone:0.6.0' = [for
   }
 }]
 
+// DNS Private Resolver (optional; nutzt die delegierten Resolver-Subnetze des Hubs)
+module dnsPrivateResolvers 'br/public:avm/res/network/dns-resolver:0.5.7' = [for (hub, i) in hubNetworks: if (hub.?privateDnsSettings.?deployDnsPrivateResolver ?? false) {
+  name: 'alz-dnspr-${i}-${uniqueString(deployment().name)}'
+  scope: resourceGroup('${parHubNetworkingResourceGroupNamePrefix}-${hub.location}')
+  dependsOn: [ hubVirtualNetworks ]
+  params: {
+    name: hub.?privateDnsSettings.?privateDnsResolverName ?? 'dnspr-alz-${hub.location}'
+    location: hub.location
+    tags: parTags
+    enableTelemetry: parEnableTelemetry
+    virtualNetworkResourceId: hubVirtualNetworks[i].outputs.resourceId
+    inboundEndpoints: [
+      {
+        name: 'inbound'
+        subnetResourceId: '${hubVirtualNetworks[i].outputs.resourceId}/subnets/DNSPrivateResolverInboundSubnet'
+      }
+    ]
+    outboundEndpoints: [
+      {
+        name: 'outbound'
+        subnetResourceId: '${hubVirtualNetworks[i].outputs.resourceId}/subnets/DNSPrivateResolverOutboundSubnet'
+      }
+    ]
+  }
+}]
+
 // ================ //
 // Outputs
 // ================ //
@@ -380,3 +406,6 @@ output outAzureFirewallPrivateIps array = [for (hub, i) in hubNetworks: (hub.?az
 
 @description('Resource IDs der Firewall Policies je Hub (leerer String, wenn keine Firewall deployed).')
 output outFirewallPolicyIds array = [for (hub, i) in hubNetworks: (hub.?azureFirewallSettings.?deployAzureFirewall ?? false) ? (firewallPolicies[i].?outputs.?outFirewallPolicyId ?? '') : '']
+
+@description('Resource IDs der DNS Private Resolver je Hub (leerer String, wenn nicht deployed).')
+output outDnsPrivateResolverIds array = [for (hub, i) in hubNetworks: (hub.?privateDnsSettings.?deployDnsPrivateResolver ?? false) ? (dnsPrivateResolvers[i].?outputs.?resourceId ?? '') : '']

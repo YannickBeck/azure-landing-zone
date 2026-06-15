@@ -7,11 +7,14 @@ on:
     paths:
       - 'templates/**'
       - 'config/**'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - master
     paths:
       - 'templates/**'
+      - 'config/**'
+      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       deployment_scope:
@@ -35,10 +38,7 @@ permissions:
   contents: read
 
 env:
-  AZURE_CLI_VERSION: '2.60.0'
-  BICEP_VERSION: 'latest'
   PRIMARY_LOCATION: 'germanywestcentral'
-  SECONDARY_LOCATION: 'northeurope'
 
 jobs:
   # ============================================================

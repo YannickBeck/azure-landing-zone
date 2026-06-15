@@ -181,6 +181,71 @@ mit gebundener `afwp-alz-…`-Policy; 37 Private DNS Zones am primären Hub verl
 
 ---
 
+## Stufe 5 – Spoke-Netzwerk (optional, je Workload-Subscription)
+
+Setzt ein Workload-Spoke-VNet auf, peert es bidirektional an den Hub und legt
+optional eine Default-Route über die Hub-Firewall.
+
+**Vorbereitung** – die Hub-Firewall-IP aus dem Networking-Deployment (Stufe 4) holen
+und in `templates/networking/spoke/main.bicepparam` als `parFirewallPrivateIp` setzen
+(leer lassen = keine Default-Route/Firewall-Transit):
+
+```bash
+az account set --subscription "$CONN_SUB"
+az deployment sub show --name "alz-hubnetworking-$(date +%Y...)" \
+  --query "properties.outputs.outAzureFirewallPrivateIps.value" -o tsv
+# alternativ direkt von der Firewall:
+az network firewall show -g rg-alz-conn-germanywestcentral -n afw-alz-germanywestcentral \
+  --query "ipConfigurations[0].privateIPAddress" -o tsv
+```
+
+In `spoke/main.bicepparam` außerdem `parHubVirtualNetworkResourceId` auf die Hub-VNet-ID
+setzen. Dann deployen:
+
+```bash
+WORKLOAD_SUB="<WORKLOAD_SUBSCRIPTION_ID>"
+pwsh ./deploy.ps1 -TenantId "$TENANT_ID" \
+  -DeploySpoke -WorkloadSubscriptionId "$WORKLOAD_SUB"
+```
+
+**Verifizieren:**
+
+```bash
+az account set --subscription "$WORKLOAD_SUB"
+az network vnet peering list -g rg-alz-spoke-corp-app01 \
+  --vnet-name vnet-corp-app01-germanywestcentral \
+  --query "[].{name:name, state:peeringState}" -o table
+az network route-table list -g rg-alz-spoke-corp-app01 -o table
+```
+
+**Erwartung:** Spoke-VNet, Peering Spoke↔Hub `Connected`; (falls Firewall-IP gesetzt)
+Route Table mit Default-Route `0.0.0.0/0 → VirtualAppliance`.
+
+---
+
+## Stufe 6 – Subscription Vending (optional)
+
+Platziert eine bestehende Subscription in die Ziel-MG (Default: Placement-only,
+keine Billing-Rechte nötig). Vorher `templates/core/subscription-vending/main.bicepparam`
+anpassen (`parExistingSubscriptionId`, `parTargetManagementGroupId`).
+
+```bash
+pwsh ./deploy.ps1 -TenantId "$TENANT_ID" -DeploySubscriptionVending
+```
+
+**Verifizieren:**
+
+```bash
+az account management-group subscription show \
+  --name alz-landingzones-corp --subscription "<WORKLOAD_SUBSCRIPTION_ID>" -o table
+```
+
+**Erwartung:** Subscription erscheint unter der Ziel-MG. Für den **Create**-Modus
+(neue Subscription) ist eine EA/MCA-Billing-Rolle nötig (`parCreateSubscription=true`
++ `parSubscriptionBillingScope`).
+
+---
+
 ## Gesamt-Checkliste
 
 - [ ] Stufe 1 What-If aller Scopes ohne Fehler
@@ -188,6 +253,8 @@ mit gebundener `afwp-alz-…`-Policy; 37 Private DNS Zones am primären Hub verl
 - [ ] Log Analytics Workspace + 3 DCRs + UAMI
 - [ ] 2 Hub-VNets, Peering `Connected`
 - [ ] (falls aktiv) Firewall mit Policy gebunden, Bastion vorhanden, Private DNS verlinkt
+- [ ] (optional) Spoke-VNet + Peering Spoke↔Hub `Connected`, Default-Route auf Firewall
+- [ ] (optional) Subscription in Ziel-MG platziert (Vending)
 
 ---
 
