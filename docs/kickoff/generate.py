@@ -220,8 +220,104 @@ def build_docx():
               "richtige Management Group platziert – standardmäßig im Placement-Modus (ohne Billing-Rechte), "
               "optional als Neuanlage (EA/MCA).")
 
-    # 5 IaC & CI/CD
-    doc.add_heading("5. Infrastructure as Code & CI/CD", level=1)
+    # 5 Ressourcen-Übersicht
+    doc.add_heading("5. Erstellte Azure-Ressourcen – Gesamtübersicht", level=1)
+    body(doc, "Die folgende Tabelle listet alle Azure-Ressourcen, die durch die Landing-Zone-Templates "
+              "erstellt werden. Ressourcen mit Scope 'Tenant' benötigen keine Subscription, alle übrigen "
+              "werden in den angegebenen Platform-Subscriptions angelegt.")
+
+    doc.add_heading("5.1 Governance (Tenant-Scope)", level=2)
+    add_table(doc,
+        ["Ressourcentyp", "Name / Konvention", "Anzahl", "Kosten"],
+        [
+            ["Management Group", "alz, alz-platform, alz-platform-{connectivity,identity,management,security}, "
+             "alz-landingzones, alz-landingzones-{corp,online,local}, alz-sandbox, alz-decommissioned", "12", "Kostenlos"],
+            ["Policy Assignment – Deny Location", "Deny-Location @ alz", "1", "Kostenlos"],
+            ["Policy Assignment – Require Tag", "Require-RG-Tag @ alz", "1", "Kostenlos"],
+            ["Policy Assignment – Storage HTTPS", "Deny-Storage-Http @ alz", "1", "Kostenlos"],
+            ["Policy Assignment – Deny NIC Public IP", "Deny-NIC-PublicIP @ alz-landingzones-corp", "1", "Kostenlos"],
+            ["Policy Assignment – Deny Resource Types", "Deny-All @ alz-decommissioned (leere Allowed-Liste)", "1", "Kostenlos"],
+            ["Policy Exemption", "Require-RG-Tag Ausnahme @ alz-sandbox", "1", "Kostenlos"],
+            ["RBAC Role Assignment", "Owner/Contributor/Reader je Entra-Gruppe (konfigurierbar)", "n", "Kostenlos"],
+        ],
+        widths=[2.3, 3.6, 0.7, 1.4])
+
+    doc.add_heading("5.2 Logging (Management-Subscription)", level=2)
+    add_table(doc,
+        ["Ressourcentyp", "Name / Konvention", "Anzahl", "Kosten"],
+        [
+            ["Resource Group", "rg-alz-logging-germanywestcentral", "1", "Kostenlos"],
+            ["Log Analytics Workspace", "law-alz-germanywestcentral (365 Tage, PerGB2018)", "1", "5 GB/Mon. kostenlos"],
+            ["Data Collection Rule – VM Insights", "dcr-alz-vmi-germanywestcentral", "1", "Im LAW enthalten"],
+            ["Data Collection Rule – Change Tracking", "dcr-alz-ct-germanywestcentral", "1", "Im LAW enthalten"],
+            ["Data Collection Rule – Defender SQL", "dcr-alz-sql-germanywestcentral", "1", "Im LAW enthalten"],
+            ["User-Assigned Managed Identity", "mi-alz-germanywestcentral", "1", "Kostenlos"],
+            ["LAW Solution – ChangeTracking", "ChangeTracking", "1", "Im LAW enthalten"],
+        ],
+        widths=[2.3, 3.6, 0.7, 1.4])
+
+    doc.add_heading("5.3 Security-Baseline (je Subscription)", level=2)
+    body(doc, "Die folgenden Ressourcen werden per Subscription deployt (Management, Connectivity, Workload).")
+    add_table(doc,
+        ["Ressourcentyp", "Name / Konvention", "Anzahl je Sub", "Kosten"],
+        [
+            ["Defender Pricing – VirtualMachines", "VirtualMachines", "1", "Standard: ~€13/Server/Mon."],
+            ["Defender Pricing – StorageAccounts", "StorageAccounts", "1", "Standard: transaktionsbasiert"],
+            ["Defender Pricing – KeyVaults", "KeyVaults", "1", "Standard: ~€0,02/10k Tx"],
+            ["Defender Pricing – Arm", "Arm (CSPM)", "1", "Standard: per API-Call"],
+            ["Defender Pricing – Containers", "Containers", "1", "Standard: ~€7/vCPU/Mon."],
+            ["Defender Pricing – AppServices", "AppServices", "1", "Standard: ~€13/App/Mon."],
+            ["Defender Pricing – SqlServers", "SqlServers", "1", "Standard: ~€13/Server/Mon."],
+            ["Defender Pricing – SqlServerVMs", "SqlServerVirtualMachines", "1", "Standard: ~€13/Server/Mon."],
+            ["Defender Pricing – OSS Datenbanken", "OpenSourceRelationalDatabases", "1", "Standard: ~€13/Server/Mon."],
+            ["Defender Pricing – CosmosDB", "CosmosDbs", "1", "Standard: per RU"],
+            ["Security Contact", "default", "1", "Kostenlos"],
+            ["Diagnostic Settings (Activity-Log → LAW)", "alz-activitylog-to-law", "1", "Im LAW enthalten"],
+        ],
+        widths=[2.3, 2.9, 1.0, 1.8])
+
+    doc.add_heading("5.4 Hub Networking (Connectivity-Subscription)", level=2)
+    add_table(doc,
+        ["Ressourcentyp", "Name / Konvention", "Anzahl", "Kosten"],
+        [
+            ["Resource Group", "rg-alz-conn-germanywestcentral", "1", "Kostenlos"],
+            ["Virtual Network (Hub primär)", "vnet-alz-germanywestcentral (10.0.0.0/22)", "1", "Kostenlos"],
+            ["Virtual Network (Hub sekundär)", "vnet-alz-northeurope (10.1.0.0/22)", "1", "Kostenlos"],
+            ["Azure Firewall", "afw-alz-germanywestcentral", "1", "~€1.100/Monat"],
+            ["Firewall Policy", "afwp-alz-germanywestcentral", "1", "Kostenlos"],
+            ["Azure Bastion", "bas-alz-germanywestcentral", "1", "~€120/Monat"],
+            ["Public IP – Firewall", "pip-afw-alz-germanywestcentral", "1", "~€3/Monat"],
+            ["Public IP – Bastion", "pip-bas-alz-germanywestcentral", "1", "~€3/Monat"],
+            ["VNet Peering Hub↔Hub", "Hub GWC ↔ Hub NE (bidirektional)", "2", "Gering (Datenübertragung)"],
+            ["Private DNS Zone", "privatelink.*.azure.com / privatelink.*.core.*", "37", "~€0,90/Zone/Mon."],
+            ["DNS Private Resolver (optional)", "dnspr-alz-germanywestcentral", "0–1", "~€25/Monat (bei Aktivierung)"],
+        ],
+        widths=[2.3, 3.2, 0.7, 1.8])
+
+    doc.add_heading("5.5 Spoke Networking (Workload-Subscription, je Landing Zone)", level=2)
+    add_table(doc,
+        ["Ressourcentyp", "Name / Konvention", "Anzahl", "Kosten"],
+        [
+            ["Resource Group", "rg-alz-spoke-<workload>-<region>", "1", "Kostenlos"],
+            ["Virtual Network (Spoke)", "vnet-<workload>-<region> (z. B. 10.2.0.0/24)", "1", "Kostenlos"],
+            ["Route Table", "rt-<workload>-<region> (Default-Route → Firewall)", "1", "Kostenlos"],
+            ["VNet Peering Spoke→Hub", "spoke-to-hub", "1", "Gering (Datenübertragung)"],
+            ["VNet Peering Hub→Spoke", "hub-to-spoke", "1", "Gering (Datenübertragung)"],
+            ["Private DNS Zone Link", "Link je Zone zu Spoke VNet", "37", "Kostenlos"],
+        ],
+        widths=[2.3, 3.2, 0.7, 1.8])
+
+    doc.add_heading("5.6 Subscription Vending (MG-Scope)", level=2)
+    add_table(doc,
+        ["Modus", "Ressource / Aktion", "Voraussetzung", "Kosten"],
+        [
+            ["Placement (Standard)", "Bestehende Subscription → Ziel-MG verschoben", "Keine Billing-Rechte nötig", "Kostenlos"],
+            ["Create (optional)", "Neue Subscription per EA/MCA Billing API erstellt", "Billing Account Owner-Rolle", "Sub-abhängig"],
+        ],
+        widths=[1.8, 3.3, 2.4, 0.5])
+
+    # 6 IaC & CI/CD
+    doc.add_heading("6. Infrastructure as Code & CI/CD", level=1)
     for bp, tx in [
         ("Bicep + AVM", "Deklarative Templates auf Basis der Azure Verified Modules aus der öffentlichen Microsoft-Registry."),
         ("deploy.ps1", "PowerShell-Orchestrierung mit gestaffelten Schritten und optionalen Schaltern (Spoke, Vending, Security)."),
@@ -231,8 +327,8 @@ def build_docx():
     ]:
         bullet(doc, tx, bp)
 
-    # 6 Naming & IP
-    doc.add_heading("6. Namens- & Adresskonzept", level=1)
+    # 7 Naming & IP
+    doc.add_heading("7. Namens- & Adresskonzept", level=1)
     add_table(doc, ["Element", "Konvention / Bereich"], [
         ["Management Groups", "alz, alz-platform-*, alz-landingzones-*"],
         ["Resource Groups", "rg-alz-<zweck>-<region>"],
@@ -242,8 +338,8 @@ def build_docx():
         ["Regionen", "germanywestcentral (primär), northeurope (sekundär)"],
     ], widths=[2.4, 4.6])
 
-    # 7 Betrieb
-    doc.add_heading("7. Betrieb & Verifikation", level=1)
+    # 8 Betrieb
+    doc.add_heading("8. Betrieb & Verifikation", level=1)
     body(doc, "Ein gestaffeltes Smoke-Run-Runbook führt von der statischen Validierung über What-If (ohne "
               "Änderungen) bis zum echten Deployment – nach Risiko/Kosten geordnet:")
     add_table(doc, ["Stufe", "Inhalt", "Azure-Wirkung"], [
@@ -257,8 +353,8 @@ def build_docx():
     body(doc, "Aktueller Verifikationsstand: alle Templates bauen fehlerfrei (Bicep 0.44.1, 0 Errors / 0 Warnings); "
               "die CI-Validierung läuft grün.")
 
-    # 8 Status
-    doc.add_heading("8. Umsetzungsstatus", level=1)
+    # 9 Status
+    doc.add_heading("9. Umsetzungsstatus", level=1)
     add_table(doc, ["Domäne", "Status"], [
         ["Management Groups + Hierarchie", "Umgesetzt"],
         ["Governance-Policies (schlankes Set)", "Umgesetzt"],
@@ -274,8 +370,8 @@ def build_docx():
         ["VPN/ExpressRoute, DDoS, Virtual WAN", "Vorbereitet / optional"],
     ], widths=[4.6, 2.4])
 
-    # 9 Roadmap
-    doc.add_heading("9. Roadmap / nächste Schritte", level=1)
+    # 10 Roadmap
+    doc.add_heading("10. Roadmap / nächste Schritte", level=1)
     for tx in [
         "Smoke Run im Kunden-Tenant (What-If → Management Groups → Logging → Networking).",
         "Identity-Domäne ausgestalten (Entra-Diagnose, hybride Anbindung nach Bedarf).",
@@ -286,8 +382,8 @@ def build_docx():
     ]:
         bullet(doc, tx)
 
-    # 10 Entscheidungspunkte
-    doc.add_heading("10. Entscheidungs- & Beratungspunkte (Kickoff)", level=1)
+    # 11 Entscheidungspunkte
+    doc.add_heading("11. Entscheidungs- & Beratungspunkte (Kickoff)", level=1)
     body(doc, "Folgende Punkte sind gemeinsam mit dem Kunden zu klären – sie bestimmen Ausprägung, Kosten und "
               "Compliance der Landing Zone:")
     add_table(doc, ["Thema", "Zu klären", "Empfehlung"], [
@@ -305,8 +401,8 @@ def build_docx():
         ["Log-Aufbewahrung", "365 Tage / Kosten", "Nach Compliance"],
     ], widths=[1.8, 2.9, 2.3])
 
-    # 11 Voraussetzungen
-    doc.add_heading("11. Voraussetzungen", level=1)
+    # 12 Voraussetzungen
+    doc.add_heading("12. Voraussetzungen", level=1)
     for tx in [
         "Tenant-Berechtigungen: Management Group Contributor / Owner auf der Root-MG für die MG-Erstellung.",
         "Owner auf Management- und Connectivity-Subscription.",
@@ -316,8 +412,8 @@ def build_docx():
     ]:
         bullet(doc, tx)
 
-    # 12 Glossar
-    doc.add_heading("12. Glossar", level=1)
+    # 13 Glossar
+    doc.add_heading("13. Glossar", level=1)
     add_table(doc, ["Begriff", "Bedeutung"], [
         ["ALZ", "Azure Landing Zone – standardisiertes Cloud-Fundament"],
         ["AVM", "Azure Verified Modules – geprüfte Bicep-Module von Microsoft"],
