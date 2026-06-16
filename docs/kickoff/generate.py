@@ -489,7 +489,7 @@ def build_docx():
     footer = section.footer.paragraphs[0]; footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
     fr = footer.add_run("Azure Landing Zone – Technische Dokumentation · vertraulich"); fr.font.size = Pt(8); fr.font.color.rgb = GREY
 
-    path = f"{OUT}/Azure-Landing-Zone-Dokumentation.docx"
+    path = f"{OUT}/Word/Azure-Landing-Zone-Dokumentation.docx"
     doc.save(path)
     return path
 
@@ -724,7 +724,7 @@ def build_pptx():
     txt(s, PInches(0.8), PInches(3.15), PInches(11.7), PInches(1.0), "Vielen Dank – Fragen & Diskussion", PPt(34), PWHITE, True)
     txt(s, PInches(0.85), PInches(4.3), PInches(11.7), PInches(0.6), "Nächster Schritt: Bootstrap im Kunden-Tenant (Deploy-Accelerator), dann What-If → Apply", PPt(16), PRGB(0x9F,0xD3,0xFF))
 
-    path = f"{OUT}/Azure-Landing-Zone-Kickoff.pptx"
+    path = f"{OUT}/Powerpoint/Azure-Landing-Zone-Kickoff.pptx"
     prs.save(path)
     return path
 

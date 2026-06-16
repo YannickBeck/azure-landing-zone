@@ -345,7 +345,7 @@ def build():
     f = sec.footer.paragraphs[0]; f.alignment = WD_ALIGN_PARAGRAPH.CENTER
     fr = f.add_run("Azure Landing Zone – Q&A-Vorbereitung · intern · vertraulich"); fr.font.size = Pt(8); fr.font.color.rgb = GREY
 
-    path = f"{OUT}/Azure-Landing-Zone-QnA-Vorbereitung.docx"
+    path = f"{OUT}/Word/Azure-Landing-Zone-QnA-Vorbereitung.docx"
     doc.save(path)
     return path
 

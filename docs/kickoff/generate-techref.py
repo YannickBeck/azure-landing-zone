@@ -378,7 +378,7 @@ if __name__ == "__main__":
     open(md_path, "w", encoding="utf-8").write(md)
     print("MARKDOWN:", md_path, f"({len(md.splitlines())} Zeilen)")
 
-    docx_path = f"{REPO}/docs/kickoff/Azure-Landing-Zone-Technische-Referenz.docx"
+    docx_path = f"{REPO}/docs/kickoff/Word/Azure-Landing-Zone-Technische-Referenz.docx"
     build_docx(data, docx_path)
     print("DOCX:", docx_path)
     print(f"Defs={len(data['defs'])} Sets={len(data['sets'])} Roles={len(data['roles'])} "
