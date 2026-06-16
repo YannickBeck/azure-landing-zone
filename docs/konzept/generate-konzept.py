@@ -1006,43 +1006,54 @@ def build():
         "bricht aber mit dem Microsoft ALZ Enterprise-Anspruch (bewusster Kompromiss)."
     )
     add_table(doc,
-        ["Option", "Kosten/Mon.", "ALZ-konform", "Ersparnis", "Einschränkung"],
+        ["Option", "Kosten/Mon.", "ALZ-konform", "Differenz vs. A", "Einschränkung"],
         [
             ["A – Bechtle-Standard\n(Baseline)",
              "~€1.050",
              "✔ Ja",
-             "–",
+             "– (Referenz)",
              "Keine – voller Funktionsumfang, VPN sofort verfügbar"],
             ["B – Bechtle-Optimiert\n(VPN deferred +\n1-J.-Reservation FW)",
              "~€770",
              "✔ Ja",
-             "~€280/Mon.\n(~26 %)",
+             "−€280/Mon.\n(26 % günstiger)",
              "VPN Gateway erst deployen wenn on-prem-Anbindung konkret geplant.\n"
              "1-Jahres-Bindung auf Firewall (Preisbindung, kein Architektur-Eingriff)."],
             ["C – Bechtle-Budget\n(Firewall Basic,\nVPN deferred)\n⚠ ALZ-Bruch",
              "~€500",
              "✘ Nein",
-             "~€550/Mon.\n(~52 %)",
+             "−€550/Mon.\n(52 % günstiger)",
              "Firewall Basic: keine Application Rules (kein FQDN-Egress-Filtering),\n"
              "kein Threat Intelligence, kein Autoscaling.\n"
              "Microsoft klassifiziert Basic ausdrücklich als 'not for enterprise'.\n"
              "ALZ-Firewall-Policies mit App-Rules sind nicht kompatibel."],
+            ["D – Microsoft-Default\n(alle Dienste,\n2 Regionen)",
+             "~€5.800",
+             "✔ Ja\n(vollständig)",
+             "+€4.750/Mon.\n(452 % teurer)",
+             "Maximaler Enterprise-Standard – alle Komponenten aktiv:\n"
+             "Firewall Premium (2×), DDoS Plan, ExpressRoute GW (2×),\n"
+             "VPN GW (2×), Bastion (2×), DNS Resolver (2×).\n"
+             "Empfehlung von Microsoft für kritische Unternehmensumgebungen."],
         ],
-        col_widths=[1.8, 0.9, 0.9, 0.9, 4.1]
+        col_widths=[1.8, 0.9, 0.9, 1.2, 3.8]
     )
     add_table(doc,
-        ["Dienst", "Option A (~€1.050)", "Option B (~€770)", "Option C (~€500)"],
+        ["Dienst", "Option A (~€1.050)", "Option B (~€770)", "Option C (~€500)", "Option D (~€5.800)"],
         [
-            ["Azure Firewall",        "Standard  ~€700",            "Standard (reserved)  ~€560", "Basic  ~€300"],
-            ["VPN Gateway",           "1× aktiv  ~€140",            "Deferred  €0",               "Deferred  €0"],
-            ["Azure Bastion",         "1× aktiv  ~€120",            "1× aktiv  ~€120",            "1× aktiv  ~€120"],
-            ["DNS Private Resolver",  "1× aktiv  ~€25",             "1× aktiv  ~€25",             "1× aktiv  ~€25"],
-            ["Private DNS Zones",     "~€15",                        "~€15",                        "~€15"],
-            ["Log Analytics",         "~€50",                        "~€50",                        "~€50"],
-            ["Gesamt",               "~€1.050",                     "~€770",                       "~€510"],
-            ["ALZ-konform",          "✔ Ja",                        "✔ Ja",                        "✘ Nein (FW Basic)"],
+            ["Azure Firewall",        "Standard 1×  ~€700",         "Standard 1× reserved  ~€560", "Basic 1×  ~€300",   "Premium 2×  ~€2.200"],
+            ["DDoS Protection",       "–",                           "–",                            "–",                 "Plan  ~€2.500"],
+            ["ExpressRoute GW",       "–",                           "–",                            "–",                 "2×  ~€560"],
+            ["VPN Gateway",           "1× aktiv  ~€140",             "Deferred  €0",                 "Deferred  €0",      "2×  ~€280"],
+            ["Azure Bastion",         "1×  ~€120",                   "1×  ~€120",                    "1×  ~€120",         "2×  ~€240"],
+            ["DNS Private Resolver",  "1×  ~€25",                    "1×  ~€25",                     "1×  ~€25",          "2×  ~€50"],
+            ["Private DNS Zones",     "~€15",                        "~€15",                         "~€15",              "~€15"],
+            ["Log Analytics",         "~€50",                        "~€50",                         "~€50",              "~€50"],
+            ["Regionen",              "GWC",                         "GWC",                          "GWC",               "GWC + NE"],
+            ["Gesamt",                "~€1.050",                     "~€770",                        "~€510",             "~€5.800"],
+            ["ALZ-konform",           "✔ Ja",                        "✔ Ja",                         "✘ Nein",            "✔ Ja (vollst.)"],
         ],
-        col_widths=[2.0, 2.0, 2.0, 2.0]
+        col_widths=[1.6, 1.6, 1.6, 1.3, 1.5]
     )
 
     doc.add_page_break()
