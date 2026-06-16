@@ -7,7 +7,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 OUT = "/home/user/azure-landing-zone/docs/kickoff"
-DATE = "15.06.2026"
+DATE = "16.06.2026"
 
 BLUE = RGBColor(0x00, 0x78, 0xD4)
 DARK = RGBColor(0x24, 0x3A, 0x5E)
@@ -99,40 +99,54 @@ def build():
 
     # A. Strategie
     section(doc, "A. Strategie & Architektur")
-    qa(doc, "Folgt das der offiziellen Microsoft-ALZ-Referenz?",
-       ["Ja. Management-Group-Hierarchie, Hub-and-Spoke, Subscription-Demokratisierung und Policy-Guardrails "
-        "folgen dem Microsoft-ALZ-Referenzmodell. Umgesetzt mit Bicep auf Basis der Azure Verified Modules (AVM)."])
+    qa(doc, "Nutzt ihr den offiziellen Microsoft-ALZ-Accelerator?",
+       ["Ja. Wir setzen das offizielle ALZ-Bicep-Accelerator-Starter-Modul ein (Spiegel von Azure/alz-bicep-"
+        "accelerator) und rollen es über das ALZ-PowerShell-Modul mit Deploy-Accelerator aus.",
+        "Governance kommt aus dem offiziellen Modul avm/ptn/alz/empty – also das volle, von Microsoft "
+        "gepflegte ALZ-Policy-Set, nicht ein Eigenbau."])
     qa(doc, "Warum Hub-and-Spoke und nicht Virtual WAN?",
        ["Hub-and-Spoke ist transparenter, günstiger im Einstieg und genügt für eine bis wenige Regionen.",
-        "Virtual WAN ist als Skeleton vorbereitet – sinnvoll bei vielen Regionen/Standorten oder globalem Transit. "
-        "Wechsel ist eine bewusste Architektur-Entscheidung, kein technisches Hindernis."], heikel=True)
+        "Virtual WAN ist als Alternative im Accelerator vorbereitet (network_type=vwanConnectivity) – sinnvoll "
+        "bei vielen Regionen/Standorten oder globalem Transit. Wechsel ist eine bewusste Entscheidung."], heikel=True)
     qa(doc, "Warum Bicep und nicht Terraform?",
-       ["Bicep ist Azure-nativ, ohne State-Management, mit What-If und AVM-Modulen direkt aus der Microsoft-Registry.",
-        "Terraform wäre möglich – Bicep reduziert hier Komplexität und Tooling-Abhängigkeiten."])
+       ["Die Plattform-Templates sind Bicep (Azure-nativ, ohne State-Management, mit What-If und AVM direkt aus der Registry).",
+        "Der Bootstrap des Accelerators ist Terraform-basiert (State-Storage + OIDC + Repo) – das ist Microsoft-Standard und für uns transparent."])
     qa(doc, "Was ist heute schon umgesetzt, was nicht?",
-       ["Umgesetzt: Management Groups, Governance/Policy/RBAC, Logging, Security-Baseline, Hub-Networking "
-        "(Firewall, Bastion, DNS, Peering), Spoke-Template, Subscription Vending, CI/CD mit OIDC.",
-        "Roadmap: Identity-Ressourcen, Sentinel-Connectors, aktive VPN/ER-Gateways, WAF-Ingress, DDoS."])
+       ["Umgesetzt: 12 Management Groups, volles ALZ-Policy-Set (149 Definitionen, 42 Initiativen, 123 "
+        "Assignments, 5 Custom-Rollen), Logging (avm/ptn/alz/ama), Defender-for-Cloud-Onboarding via Policy, "
+        "Hub-Networking, Bootstrap + generierte CI/CD-Pipelines mit OIDC.",
+        "Roadmap: dedizierte Identity-Ressourcen, Sentinel-Connectors, ggf. WAF-Ingress."])
     qa(doc, "Sind wir nach dem Aufbau an euch gebunden?",
-       ["Nein. Alles ist als Code im Git-Repo, dokumentiert und reproduzierbar. Der Kunde kann es selbst "
-        "betreiben oder weiterentwickeln."])
+       ["Nein. Es ist das offizielle Microsoft-Modul, vollständig als Code im Git-Repo, dokumentiert und "
+        "reproduzierbar. Der Kunde kann es selbst betreiben oder weiterentwickeln."])
 
     # B. Governance
     section(doc, "B. Governance, Policy & RBAC")
-    qa(doc, "Welche Policies greifen ab Tag 1?",
-       ["Auf alz (Root): erlaubte Regionen (Deny), Pflicht-Tag auf Resource Groups (Deny), HTTPS-Pflicht für Storage (Deny).",
-        "Auf landingzones-corp: keine Public IPs an NICs. Auf decommissioned: jede Neuanlage gesperrt. "
-        "Auf sandbox: Tag-Pflicht gelockert (Exemption)."])
+    qa(doc, "Wie viele Policies greifen, und wie tief geht das Set?",
+       ["Das volle ALZ-Policy-Set: 149 Custom-Policy-Definitionen, 42 Initiativen und 123 konkrete Assignments "
+        "über die MG-Ebenen verteilt (zzgl. Vererbung) – kein schlankes Eigenbau-Set.",
+        "Verteilung der Assignments: alz=17, landingzones=53, platform=40, corp=5, identity=4, je 1 auf "
+        "connectivity/local/sandbox/decommissioned."])
+    qa(doc, "Was greift konkret ab Tag 1?",
+       ["Auf alz (Root): Defender-Onboarding (Deploy-MDFC-*), Activity-Log/Diagnose ins LAW, Compute Security "
+        "Baseline (Enforce-ACSB), Service Health.",
+        "Auf landingzones-corp: keine Public Endpoints/Public-IP an NICs, kein Hybrid-Networking, Private DNS. "
+        "Sandbox: gelockerte Guardrails. Decommissioned: gesperrt."])
     qa(doc, "Was, wenn eine Policy ein legitimes Deployment blockiert?",
-       ["Gezielte Policy Exemptions auf MG-/Subscription-/RG-Ebene – versioniert im Code, nicht als Klick im Portal. "
-        "Das Sandbox-Beispiel zeigt das Muster bereits."])
-    qa(doc, "Ist das schon das vollständige ALZ-Policy-Set?",
-       ["Nein – bewusst ein schlankes, wirksames Custom-Set zum Start. Erweiterbar auf das volle ALZ-Set bzw. "
-        "Compliance-Initiativen (ISO 27001, CIS, BSI C5), sobald Compliance-Pflichten feststehen."], heikel=True)
+       ["Gezielte Policy Exemptions auf MG-/Subscription-/RG-Ebene – versioniert im Code, nicht als Klick im "
+        "Portal. Zusätzlich sind viele Guardrail-Initiativen im Auslieferungszustand auf DoNotEnforce (auditierend) "
+        "und werden erst nach Bedarf scharfgeschaltet."])
+    qa(doc, "Müsst ihr das Policy-Set erst noch erweitern?",
+       ["Nein – es ist bereits das vollständige, von Microsoft gepflegte ALZ-Set. Compliance-Feintuning heißt hier "
+        "eher: DoNotEnforce-Initiativen scharfschalten bzw. Parameter setzen, nicht Policies nachbauen."], heikel=True)
+    qa(doc, "Was bedeuten DeployIfNotExists / Modify in den Assignments?",
+       ["Viele Assignments korrigieren/ergänzen Ressourcen automatisch (z. B. Diagnose, Monitoring-Agent, "
+        "Defender-Onboarding) und legen dafür automatisch Remediation-Identities (Managed Identities) an.",
+        "Das ist Microsoft-Standard – nichts, was wir manuell pflegen müssen."])
     qa(doc, "Wie funktioniert RBAC – wer bekommt was?",
-       ["Wiederverwendbares Modul weist Built-in-Rollen (Owner/Contributor/Reader) an Entra-ID-Gruppen je "
-        "Management Group zu. Object-IDs werden injiziert – keine Hardcodes. Leeres Set = gefahrloser No-Op.",
-        "Konkrete Gruppen-Object-IDs braucht ihr vom Kunden."])
+       ["Das Accelerator-Modul liefert 5 Custom-Rollen (Subscription-Owner, Security-Operations, Network-"
+        "Management, Application-Owners, Network-Subnet-Contributor) und weist Rollen an Entra-ID-Gruppen je MG zu.",
+        "Object-IDs werden über die Konfiguration injiziert – keine Hardcodes. Konkrete Gruppen-IDs braucht ihr vom Kunden."])
     qa(doc, "Nutzt ihr PIM / Just-in-Time-Zugriff?",
        ["PIM ist empfohlen und kompatibel (Eligible-Zuweisungen auf die Gruppen). Aktivierung ist eine "
         "Kundenentscheidung im RBAC-Modell."])
@@ -150,12 +164,14 @@ def build():
        ["Aktuell Standard. Premium bietet IDPS, TLS-Inspection und URL-Filtering – ca. doppelte Kosten.",
         "Frage zurück: Erwartet ihr Layer-7-Inspection/TLS-Aufbruch? Dann planen wir Premium ein."], heikel=True)
     qa(doc, "Wie sieht das Egress-Regelwerk aus?",
-       ["Default-Deny. Erlaubt sind nur DNS-Proxy, Azure-DNS, NTP, AzureCloud-HTTPS und Windows-Update.",
-        "Alle Workload-spezifischen Freigaben kommen kontrolliert und versioniert in die Firewall Policy."])
+       ["Die Azure Firewall hat eine zugeordnete Firewall Policy (DNS-Proxy aktiv). Grundsatz bleibt Default-Deny "
+        "für nicht freigegebenen Verkehr.",
+        "Alle Workload-spezifischen Freigaben kommen kontrolliert und versioniert in die Firewall Policy – nicht als Portal-Klick."])
     qa(doc, "Wie bindet ihr On-Prem an – VPN oder ExpressRoute?",
-       ["Beides vorbereitet (Gateways deaktiviert). VPN für schnellen/günstigen Start, ExpressRoute für "
-        "Bandbreite/SLA/dedizierte Leitung.",
-        "Eure Entscheidung nach Bandbreite, SLA und Budget – plus GatewaySubnet ist reserviert."], heikel=True)
+       ["Beide Gateways sind im Microsoft-Default des Accelerators in beiden Hubs aktiviert (VPN Gateway "
+        "VpnGw1AZ + ExpressRoute Gateway). VPN für schnellen/günstigen Start, ExpressRoute für Bandbreite/SLA.",
+        "Wenn nur eines davon gebraucht wird, schalten wir das andere über die deploy*-Schalter aus – das spart "
+        "Kosten. Eure Entscheidung nach Bandbreite, SLA und Budget."], heikel=True)
     qa(doc, "Unterstützt ihr BGP? Welches ASN nutzt Azure?",
        ["Ja, BGP wird unterstützt. Azure VPN Gateway nutzt standardmäßig ASN 65515 – euer On-Prem-ASN darf "
         "nicht kollidieren. ASN bitte vorab nennen."])
@@ -178,17 +194,20 @@ def build():
        ["Azure Firewall skaliert automatisch in den zweistelligen Gbit/s-Bereich; SNAT-Ports sind die übliche "
         "Grenze und werden über mehrere Public IPs erweitert."])
     qa(doc, "DDoS-Schutz?",
-       ["DDoS Network Protection ist vorbereitet, standardmäßig aus (~€2.500/Monat). Für internetseitige "
-        "Workloads empfohlen, sonst pro öffentlicher IP der Basisschutz."], heikel=True)
+       ["DDoS Network Protection ist im Microsoft-Default des Accelerators aktiviert (Hub 1) – mit ~€2.500/Monat "
+        "der teuerste Einzelposten.",
+        "Für internetseitige Workloads sinnvoll; sonst bewusst über den Schalter deployDdosProtectionPlan "
+        "deaktivieren und auf den IP-Basisschutz setzen."], heikel=True)
 
     # D. DNS
     section(doc, "D. DNS & Namensauflösung")
     qa(doc, "Wie löst ihr Private Endpoints auf?",
-       ["37 zentrale Private DNS Zones (privatelink.*) am Hub, mit den VNets verknüpft. Private Endpoints "
-        "registrieren sich automatisch."])
+       ["Zentrale Private DNS Zones (privatelink.*) am Hub, mit den VNets verknüpft. Private Endpoints "
+        "registrieren sich automatisch; die Policy Deploy-Private-DNS-Zones erzwingt das für PaaS-Dienste."])
     qa(doc, "Wie funktioniert hybride Namensauflösung zu On-Prem?",
-       ["Über den DNS Private Resolver (Code vorhanden, per Default aus): Inbound-Endpoint für Azure→On-Prem-"
-        "Anfragen, Outbound mit Forwarding-Regeln zu euren On-Prem-DNS-Servern.",
+       ["Über den DNS Private Resolver – im Microsoft-Default in beiden Hubs aktiviert (Inbound-/Outbound-"
+        "Endpoints in delegierten Subnetzen): Inbound für Azure→On-Prem-Anfragen, Outbound mit Forwarding-Regeln "
+        "zu euren On-Prem-DNS-Servern.",
         "Wir brauchen: autoritative On-Prem-DNS-Server und die Domänen für Conditional Forwarding."], heikel=True)
     qa(doc, "DNS Private Resolver vs. eigene DNS-VMs?",
        ["Resolver ist PaaS, zonenredundant, kein VM-Betrieb – günstiger und wartungsärmer als ein DC/DNS-VM-Paar. "
@@ -199,9 +218,13 @@ def build():
 
     # E. Security
     section(doc, "E. Security")
+    qa(doc, "Wie wird Defender for Cloud aktiviert?",
+       ["Automatisch über die Policy-Assignments auf der alz-Root-Ebene (Deploy-MDFC-Config-H224, Deploy-"
+        "MDEndpoints, Deploy-MDFC-OssDb, Deploy-MDFC-SqlAtp) – DeployIfNotExists, kein eigenes Security-Template.",
+        "Neue Subscriptions unter alz werden so beim Eintritt automatisch onboardet."])
     qa(doc, "Welche Defender-Pläne, welcher Tier?",
-       ["10 Pläne: VMs, Storage, Key Vault, ARM, Container, App Service, SQL, SQL-on-VM, Open-Source-DB, Cosmos DB.",
-        "Tier je Plan konfigurierbar (Standard/Free). Standard für Produktion empfohlen – kostet pro Ressource."], heikel=True)
+       ["Servers/Endpoint, SQL (Server/MI/VM), Open-Source-DB, Storage, Container u. a. – über die MDFC-Initiative gesteuert.",
+        "Die Policy hebt die Pläne auf den Standard-Tier (kostenpflichtig, i. d. R. pro Ressource). Der Tier ist über die Konfiguration steuerbar."], heikel=True)
     qa(doc, "Habt ihr Sentinel / ein SIEM?",
        ["Sentinel-Onboarding ist über einen Schalter am Log Analytics Workspace vorbereitet. Data Connectors "
         "und Analyseregeln sind Roadmap und werden bei SIEM-Bedarf ausgestaltet."])
@@ -223,14 +246,15 @@ def build():
     # G. Betrieb / IaC
     section(doc, "G. Betrieb, IaC & CI/CD")
     qa(doc, "Wie deployt ihr – manuell oder Pipeline?",
-       ["GitHub Actions: Jobs validate (Build), what-if (Vorschau), preflight (Secret-Check), deploy (nach Scope "
-        "gated). Lokal optional über deploy.ps1."])
+       ["Über das offizielle ALZ-Modul: Deploy-Accelerator führt den Bootstrap aus (erstellt Repo, OIDC, "
+        "Pipelines); danach fahren die generierten Pipelines die 18 geordneten Deploy-Stufen.",
+        "Reihenfolge: Governance/MGs (1–15) → Core-Logging (16) → Networking Hub bzw. Virtual WAN (17/18)."])
     qa(doc, "Wie testet ihr Änderungen vorab?",
-       ["Azure What-If zeigt vor jedem Deployment exakt, was sich ändert – ohne eine Ressource zu erstellen. "
-        "Risikofrei und kostenlos."])
+       ["Azure What-If wird über die Pipeline vor dem Apply ausgeführt und zeigt exakt, was sich ändert – ohne "
+        "eine Ressource zu erstellen. Apply erst nach Freigabe über das Approval-Gate. Risikofrei und kostenlos."])
     qa(doc, "Wie läuft die Pipeline-Anmeldung an Azure?",
-       ["Passwortlos über OIDC Federated Identity – keine gespeicherten Secrets/Zertifikate. Vier GitHub-Secrets, "
-        "drei Federated Credentials, Umgebung 'production' mit Schutzregeln."])
+       ["Passwortlos über OIDC Federated Identity – keine gespeicherten Secrets/Zertifikate. Der Bootstrap legt "
+        "dafür eine Managed Identity mit Federated Credentials und die GitHub-Environments mit Approval-Gates an."])
     qa(doc, "Was, wenn ein Deployment fehlschlägt – Rollback?",
        ["Bicep ist deklarativ/idempotent: erneutes Deployment des letzten guten Stands stellt den Soll-Zustand "
         "wieder her. What-If vorab minimiert Fehldeployments."])
@@ -240,42 +264,49 @@ def build():
 
     # H. Kosten
     section(doc, "H. Kosten")
-    body(doc, "Richtwerte (Region Germany West Central, ohne Workloads) – immer als „circa, abhängig von Nutzung“ kommunizieren:")
-    add_table(doc, ["Komponente", "Grundkosten/Monat", "Status"], [
-        ["Management Groups, Policy, RBAC", "kostenlos", "an"],
+    body(doc, "WICHTIG: Der Microsoft-Default des Accelerators aktiviert alle Netzwerk-Dienste in BEIDEN Regionen "
+              "(Summe ≈ €5.800/Monat). Richtwerte (GWC, ohne Workloads) – immer als „circa, abhängig von Nutzung“:")
+    add_table(doc, ["Komponente", "Grundkosten/Monat", "Default"], [
+        ["Management Groups, volles Policy-Set, RBAC", "kostenlos", "an"],
         ["Log Analytics (geringer Ingress)", "~0 (5 GB frei)", "an"],
-        ["Private DNS Zones (37)", "~€15", "an"],
-        ["Azure Firewall (Standard)", "~€1.100", "an"],
-        ["Azure Bastion", "~€120", "an"],
-        ["Public IPs", "~€6", "an"],
-        ["VPN/ExpressRoute Gateway", "ab ~€140 / ~€280", "aus"],
-        ["DDoS Network Protection", "~€2.500", "aus"],
-        ["Defender Standard (je Ressource)", "ab ~€13/Server", "konfigurierbar"],
+        ["Private DNS Zones", "~€15", "an"],
+        ["2x Azure Firewall (Standard)", "~€2.200", "an"],
+        ["2x Azure Bastion", "~€240", "an"],
+        ["2x VPN Gateway (VpnGw1AZ)", "~€280", "an"],
+        ["2x ExpressRoute Gateway", "~€560", "an"],
+        ["2x DNS Private Resolver", "~€50", "an"],
+        ["DDoS Network Protection (Hub 1)", "~€2.500", "an"],
+        ["Defender Standard (je Ressource)", "ab ~€13/Server", "via Policy an"],
     ], widths=[3.2, 2.2, 1.6])
     qa(doc, "Was kostet die Plattform-Grundlast im Monat?",
-       ["Mit Firewall + Bastion grob ~€1.250–1.300/Monat Grundlast.",
-        "Ohne Firewall/Bastion (nur MGs + Logging + DNS) nur ~€15–30/Monat – gut für eine kostenarme Startphase."], heikel=True)
+       ["Im vollen Microsoft-Default grob ~€5.800/Monat (doppelte Firewalls/Bastion/Gateways + DDoS).",
+        "Kostenarm: network_type=none (nur MGs + volles Policy-Set + Logging) ≈ €0; oder einzelne deploy*-"
+        "Schalter aus (z. B. nur VNets + Private DNS Zones ≈ €15/Monat). Ideal für eine risikofreie Startphase."], heikel=True)
     qa(doc, "Was sind die größten Kostentreiber?",
-       ["Azure Firewall, Bastion, optional DDoS und Defender-Standard. Alles bewusst schaltbar – nichts Teures "
-        "läuft ungewollt mit (DDoS/Gateways sind aus)."])
+       ["DDoS Network Protection (~€2.500), die doppelten Azure Firewalls (~€2.200) und die Gateways. Alles über "
+        "deploy*-Schalter steuerbar – im Default sind sie aber AN, das muss man bewusst entscheiden."])
     qa(doc, "Wie können wir Kosten optimieren?",
-       ["Firewall-SKU nach Bedarf (Standard statt Premium), Bastion nur wo nötig, Defender selektiv pro Plan, "
-        "Log-Retention nach Compliance, Reserved Instances/Savings Plans für Workloads."])
+       ["Netzwerk-Dienste nur dort/in der Region aktivieren, wo gebraucht (deploy*-Schalter), DDoS bewusst "
+        "abwägen, Firewall-SKU Standard statt Premium, Defender selektiv pro Plan, Log-Retention nach Compliance.",
+        "Für den Erst-Rollout network_type=none nutzen und Netzwerk später gezielt zuschalten."])
 
     # I. Migration
     section(doc, "I. Workloads & Migration")
     qa(doc, "Wie kommt unsere erste Workload in die Landing Zone?",
-       ["Subscription in die passende MG platzieren (Vending), Spoke-VNet ausrollen (Route Table → Firewall, "
-        "Hub-Peering, DNS-Links), dann Workload deployen. Policies greifen automatisch."])
-    qa(doc, "Was bedeutet Subscription Vending konkret?",
-       ["AVM-Pattern, das Subscriptions automatisiert in die richtige MG platziert. Standard: Placement bestehender "
-        "Subscriptions (keine Billing-Rechte nötig). Optional: Neuanlage per EA/MCA."])
+       ["Subscription in die passende MG einhängen (corp/online/local), Spoke-VNet ausrollen (Route Table → "
+        "Firewall, Hub-Peering, DNS-Links), dann Workload deployen. Policies greifen automatisch."])
+    qa(doc, "Wie platziert der Accelerator Subscriptions?",
+       ["Über die Management-Group-Struktur und den Bootstrap: bestehende Subscriptions werden in die Ziel-MG "
+        "eingehängt und erben sofort deren Policies und RBAC.",
+        "Ein eigenes Subscription-Vending-Template wird nicht mehr aktiv betrieben (liegt archiviert unter legacy-custom/)."])
     qa(doc, "Können wir bestehende Subscriptions einbinden?",
-       ["Ja – Placement-Modus verschiebt bestehende Subscriptions in die Hierarchie. Sie erben sofort Policies "
-        "und RBAC der Ziel-MG."])
+       ["Ja – sie werden in die Hierarchie verschoben und erben sofort Policies und RBAC der Ziel-MG. Keine "
+        "Billing-Rechte nötig."])
     qa(doc, "Wir haben aktuell nur eine Subscription – geht das?",
-       ["Ja. Für Start/Smoke-Run zeigen alle Plattform-Rollen auf dieselbe Subscription; getrennte Resource "
-        "Groups vermeiden Kollisionen. Multi-Subscription ist das Produktiv-Ziel, kein Muss zum Start."])
+       ["Ja. Im Accelerator setzt man dann alle vier Platform-Subscription-IDs (management/identity/connectivity/"
+        "security) auf dieselbe ID; die volle MG-Hierarchie und Policies werden trotzdem erstellt.",
+        "Die Trennung kann später erfolgen (Subscriptions in die jeweilige MG verschieben). Multi-Subscription ist "
+        "das Produktiv-Ziel, kein Muss zum Start."])
 
     # Gegenfragen
     section(doc, "J. Gegenfragen, die DU stellen solltest")
@@ -287,7 +318,9 @@ def build():
         "Erwartet ihr L7-Inspection/TLS-Aufbruch an der Firewall? (Standard vs. Premium)",
         "Habt ihr On-Prem-AD für hybride Identity?",
         "Welche Entra-Gruppen (Object-IDs) sollen welche Rollen je MG bekommen?",
-        "Compliance-Pflichten (ISO/BSI/CIS), die die Policy-Tiefe bestimmen?",
+        "Wollt ihr den vollen Netzwerk-Default (~€5.800/Mon.) oder kostenarm starten (network_type=none / Schalter aus)?",
+        "Compliance-Pflichten (ISO/BSI/CIS), für die DoNotEnforce-Guardrails scharfgeschaltet werden sollen?",
+        "GitHub-Org und PAT (repo/workflow/admin:org) für den Bootstrap vorhanden?",
         "EA/MCA vorhanden und wer hat Billing-Rechte? (Subscription-Neuanlage)",
         "Wer darf Elevated Access am Tenant Root aktivieren? (MG-Erstellung)",
     ]:
@@ -297,11 +330,12 @@ def build():
     # Top-Fallen
     section(doc, "K. Fünf Sätze, die du parat haben solltest")
     for q, col in [
+        ("„Wir setzen das offizielle Microsoft-Accelerator-Modul ein – volles ALZ-Policy-Set, kein Eigenbau.“", GREEN),
         ("„What-If zeigt jede Änderung vorab – ohne Kosten, ohne Risiko.“", GREEN),
-        ("„Was teuer ist (Firewall, DDoS), benennen wir transparent und schalten es bewusst.“", GREEN),
+        ("„Der Default aktiviert alles in beiden Regionen (~€5.800/Mon.) – kostenarm starten wir mit network_type=none.“", GREEN),
         ("„Peering ist nicht transitiv – Spoke-zu-Spoke läuft kontrolliert über die Firewall.“", GREEN),
         ("„Das lösen wir sauber im Netzwerk-Detail-Design.“ (bei tiefen Routing-/DNS-Fragen)", DARK),
-        ("„Das ist Roadmap, nicht live.“ (bei Identity, Sentinel-Connectors, WAF, Gateways)", DARK),
+        ("„Das ist Roadmap, nicht live.“ (bei dedizierten Identity-Ressourcen, Sentinel-Connectors, WAF)", DARK),
     ]:
         p = doc.add_paragraph(); p.paragraph_format.space_after = Pt(4)
         r = p.add_run("•  " + q); r.font.size = Pt(11); r.bold = True; r.font.color.rgb = col
