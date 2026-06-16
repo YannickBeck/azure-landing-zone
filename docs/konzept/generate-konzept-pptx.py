@@ -12,16 +12,12 @@ Abhängigkeit  : python-pptx  (pip install python-pptx)
 """
 
 import os
-import glob
 from pptx import Presentation
 from pptx.util import Pt
 
-BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-_pptx_dir = os.path.join(BASE_DIR, "bechtle-brand", "Powerpoint")
-_candidates = sorted(glob.glob(os.path.join(_pptx_dir, "*Teil1.pptx")))
-if not _candidates:
-    raise FileNotFoundError(f"Keine Teil1-Vorlage in {_pptx_dir}")
-TEMPLATE  = _candidates[0]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE  = os.path.join(BASE_DIR, "bechtle-brand", "Powerpoint",
+                         "VORLAGE_Bechtle_Praesentation.pptx")
 OUTPUT    = os.path.join(BASE_DIR, "Powerpoint", "Azure-Landing-Zone-Konzept.pptx")
 
 KUNDE = "<KUNDE>"
