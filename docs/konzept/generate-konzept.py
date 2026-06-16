@@ -997,6 +997,54 @@ def build():
         col_widths=[1.5, 0.8, 2.3, 2.3, 1.7]
     )
 
+    doc.add_heading("Bechtle-Varianten: Drei Einsparstufen im Vergleich", level=2)
+    add_body(doc,
+        "Innerhalb der Bechtle-Empfehlung gibt es drei konkrete Einsparstufen. "
+        "Option A ist die aktuelle Baseline. Option B ist vollständig ALZ-konform und "
+        "spart ~€280/Monat durch Reservierung und Verzicht auf das VPN Gateway bis zur "
+        "ersten on-premises-Anbindung. Option C erzielt den maximalen Einspareffekt, "
+        "bricht aber mit dem Microsoft ALZ Enterprise-Anspruch (bewusster Kompromiss)."
+    )
+    add_table(doc,
+        ["Option", "Kosten/Mon.", "ALZ-konform", "Ersparnis", "Einschränkung"],
+        [
+            ["A – Bechtle-Standard\n(Baseline)",
+             "~€1.050",
+             "✔ Ja",
+             "–",
+             "Keine – voller Funktionsumfang, VPN sofort verfügbar"],
+            ["B – Bechtle-Optimiert\n(VPN deferred +\n1-J.-Reservation FW)",
+             "~€770",
+             "✔ Ja",
+             "~€280/Mon.\n(~26 %)",
+             "VPN Gateway erst deployen wenn on-prem-Anbindung konkret geplant.\n"
+             "1-Jahres-Bindung auf Firewall (Preisbindung, kein Architektur-Eingriff)."],
+            ["C – Bechtle-Budget\n(Firewall Basic,\nVPN deferred)\n⚠ ALZ-Bruch",
+             "~€500",
+             "✘ Nein",
+             "~€550/Mon.\n(~52 %)",
+             "Firewall Basic: keine Application Rules (kein FQDN-Egress-Filtering),\n"
+             "kein Threat Intelligence, kein Autoscaling.\n"
+             "Microsoft klassifiziert Basic ausdrücklich als 'not for enterprise'.\n"
+             "ALZ-Firewall-Policies mit App-Rules sind nicht kompatibel."],
+        ],
+        col_widths=[1.8, 0.9, 0.9, 0.9, 4.1]
+    )
+    add_table(doc,
+        ["Dienst", "Option A (~€1.050)", "Option B (~€770)", "Option C (~€500)"],
+        [
+            ["Azure Firewall",        "Standard  ~€700",            "Standard (reserved)  ~€560", "Basic  ~€300"],
+            ["VPN Gateway",           "1× aktiv  ~€140",            "Deferred  €0",               "Deferred  €0"],
+            ["Azure Bastion",         "1× aktiv  ~€120",            "1× aktiv  ~€120",            "1× aktiv  ~€120"],
+            ["DNS Private Resolver",  "1× aktiv  ~€25",             "1× aktiv  ~€25",             "1× aktiv  ~€25"],
+            ["Private DNS Zones",     "~€15",                        "~€15",                        "~€15"],
+            ["Log Analytics",         "~€50",                        "~€50",                        "~€50"],
+            ["Gesamt",               "~€1.050",                     "~€770",                       "~€510"],
+            ["ALZ-konform",          "✔ Ja",                        "✔ Ja",                        "✘ Nein (FW Basic)"],
+        ],
+        col_widths=[2.0, 2.0, 2.0, 2.0]
+    )
+
     doc.add_page_break()
     # 11. ROADMAP, PHASEN UND GATES
     # ═════════════════════════════════════════════════════════════════════════

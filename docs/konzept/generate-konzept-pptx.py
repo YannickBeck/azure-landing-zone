@@ -444,6 +444,22 @@ def build():
         ("  Empfehlung: Unternehmenskritische Systeme mit strengster Compliance", 1),
     ], size=11)
 
+    content(prs, "Kosten und Kostensteuerung",
+            "Bechtle-Varianten: Drei Einsparstufen im Vergleich", [
+        ("Option A – Bechtle-Standard  ~€1.050/Monat  (Baseline)", 0),
+        ("FW Standard ~€700 | VPN GW ~€140 | Bastion ~€120 | DNS ~€25 | LAW ~€50", 1),
+        ("ALZ-konform: Ja  |  Einschränkung: keine", 1),
+        ("Option B – Bechtle-Optimiert  ~€770/Monat  (ALZ-konform)", 0),
+        ("FW Standard reserved ~€560 | VPN Gateway deferred (€0) | Bastion ~€120 | DNS ~€40 | LAW ~€50", 1),
+        ("ALZ-konform: Ja  |  Ersparnis: ~€280/Mon. (26 %)", 1),
+        ("Einschraenkung: VPN erst deployen wenn on-prem benoetigt; 1-J.-Bindung auf FW", 1),
+        ("Option C – Bechtle-Budget  ~€500/Monat  (⚠ ALZ-Bruch)", 0),
+        ("FW Basic ~€300 | VPN Gateway deferred (€0) | Bastion ~€120 | DNS ~€40 | LAW ~€50", 1),
+        ("ALZ-konform: NEIN  |  Ersparnis: ~€550/Mon. (52 %)", 1),
+        ("Bruch: Firewall Basic = keine Application Rules, kein Threat Intel, kein Autoscaling", 1),
+        ("Microsoft: 'not recommended for enterprise' – ALZ-FW-Policies nicht kompatibel", 1),
+    ], size=11)
+
     # ── 11. Roadmap & Phasen ──────────────────────────────────────────────────
     divider(prs,
         "11  ·  Roadmap und Phasen",
