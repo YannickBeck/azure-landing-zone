@@ -1,0 +1,48 @@
+---
+# ============================================================
+# Bootstrap-Konfiguration (BEFÜLLT) für Deploy-Accelerator (GitHub)
+# Original-Vorlage: examples/bootstrap/inputs-github.yaml
+# Doku: https://aka.ms/alz/acc/phase0
+# ============================================================
+
+## Decision 4: Bootstrap Resource Azure Region
+bootstrap_location: "germanywestcentral"
+
+## Decision 6: Parent Management Group (leer = Tenant Root Group)
+root_parent_management_group_id: ""
+
+## Decision 7: Platform Subscriptions
+# WICHTIG – Single-Subscription-Setup:
+#   Stehen (noch) keine 4 getrennten Subscriptions zur Verfügung, hier ALLE vier
+#   Felder auf DIESELBE Subscription-ID setzen. Die Trennung kann später erfolgen
+#   (Subscriptions in andere Management Groups verschieben).
+subscription_ids:
+  management: "<SUBSCRIPTION_ID>"
+  identity: "<SUBSCRIPTION_ID>"
+  connectivity: "<SUBSCRIPTION_ID>"
+  security: "<SUBSCRIPTION_ID>"
+
+## Decision 8: Bootstrap Resource Subscription (leer = aktuelle az-CLI-Subscription)
+bootstrap_subscription_id: ""
+
+## Decision 9: Bootstrap Resource Naming
+service_name: "alz"
+environment_name: "mgmt"
+postfix_number: 1
+
+## Decision 10: Bootstrap Networking and Agents
+# Für einen einfachen/kostenarmen Start: Microsoft-hosted Runner, kein Private Networking.
+# (Microsoft-Default ist true/true -> erzeugt self-hosted Runner-VMs + privates Netz = mehr Kosten/Setup.)
+use_self_hosted_runners: false
+use_private_networking: false
+
+## Decision 11: Version Control System Settings
+github_personal_access_token: "<GITHUB_PAT>"         # oder env: TF_VAR_github_personal_access_token
+github_runners_personal_access_token: "<GITHUB_PAT>" # bei Microsoft-hosted Runnern weniger relevant
+github_organization_name: "YannickBeck"
+apply_approvers: ["yannickbeck1@web.de"]
+
+# Basic Inputs (nicht ändern)
+iac_type: "bicep"
+bootstrap_module_name: "alz_github"
+starter_module_name: "platform_landing_zone"

@@ -1,34 +1,46 @@
-using './main.bicep'
+using 'main.bicep'
 
-// ===============================================================
-// Deployment-Scope: Management Subscription
-// ===============================================================
-
+// General Parameters
 param parLocations = [
-  'germanywestcentral'
-  'northeurope'
+  '{{primary_location}}'
+  '{{secondary_location}}'
 ]
-
-param parTags = {
-  Environment: 'Production'
-  ManagedBy: 'Platform Team'
-  CostCenter: 'IT-Platform'
+param parGlobalResourceLock = {
+  name: 'GlobalResourceLock'
+  kind: 'None'
+  notes: 'This lock was created by the ALZ Bicep Accelerator.'
 }
+param parTags = {}
+param parEnableTelemetry = true
 
-param parMgmtLoggingResourceGroup = 'rg-alz-logging-germanywestcentral'
+// Resource Group Parameters
+param parMgmtLoggingResourceGroup = '{{resource_group_logging_name_prefix||rg-alz-logging}}-${parLocations[0]}'
 
-param parLogAnalyticsWorkspaceName = 'law-alz-germanywestcentral'
+// Automation Account Parameters
+param parAutomationAccountName = 'aa-alz-${parLocations[0]}'
+param parAutomationAccountLocation = parLocations[0]
+param parDeployAutomationAccount = false
+param parAutomationAccountUseManagedIdentity = true
+param parAutomationAccountPublicNetworkAccess = true
+param parAutomationAccountSku = 'Basic'
+
+// Log Analytics Workspace Parameters
+param parLogAnalyticsWorkspaceName = 'law-alz-${parLocations[0]}'
+param parLogAnalyticsWorkspaceLocation = parLocations[0]
 param parLogAnalyticsWorkspaceSku = 'PerGB2018'
-param parLogRetentionInDays = 365
-param parSolutions = [
+param parLogAnalyticsWorkspaceCapacityReservationLevel = 100
+param parLogAnalyticsWorkspaceLogRetentionInDays = 365
+param parLogAnalyticsWorkspaceDailyQuotaGb = null
+param parLogAnalyticsWorkspaceReplication = null
+param parLogAnalyticsWorkspaceFeatures = null
+param parLogAnalyticsWorkspaceDataExports = null
+param parLogAnalyticsWorkspaceDataSources = null
+param parLogAnalyticsWorkspaceSolutions = [
   'ChangeTracking'
 ]
-param parEnableSentinel = false          // Auf true setzen fuer Microsoft Sentinel
 
-param parUserAssignedIdentityName = 'mi-alz-germanywestcentral'
-param parDataCollectionRuleVMInsightsName = 'dcr-vmi-alz-germanywestcentral'
-param parDataCollectionRuleChangeTrackingName = 'dcr-ct-alz-germanywestcentral'
-param parDataCollectionRuleMDFCSQLName = 'dcr-mdfcsql-alz-germanywestcentral'
-
-param parDeployAutomationAccount = false  // Auf true setzen wenn benoetigt
-param parAutomationAccountName = 'aa-alz-germanywestcentral'
+// Data Collection Rule Parameters
+param parUserAssignedIdentityName = 'mi-alz-${parLocations[0]}'
+param parDataCollectionRuleVMInsightsName = 'dcr-vmi-alz-${parLocations[0]}'
+param parDataCollectionRuleChangeTrackingName = 'dcr-ct-alz-${parLocations[0]}'
+param parDataCollectionRuleMDFCSQLName = 'dcr-mdfcsql-alz-${parLocations[0]}'

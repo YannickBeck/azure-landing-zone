@@ -1,34 +1,36 @@
 using './main.bicep'
 
-// ===============================================================
-// ANPASSEN: Ersetze alle Werte in <> mit deinen eigenen Werten
-// Deployment-Scope: Connectivity Subscription
-// ===============================================================
-
-param parTags = {
-  Environment: 'Production'
-  ManagedBy: 'Platform Team'
-  CostCenter: 'IT-Connectivity'
+// General Parameters
+param parLocations = [
+  '{{primary_location}}'
+  '{{secondary_location}}'
+]
+param parGlobalResourceLock = {
+  name: 'GlobalResourceLock'
+  kind: 'None'
+  notes: 'This lock was created by the ALZ Bicep Accelerator.'
 }
-
+param parTags = {}
 param parEnableTelemetry = true
 
-param parHubNetworkingResourceGroupNamePrefix = 'rg-alz-conn'
-param parDnsResourceGroupNamePrefix = 'rg-alz-dns'
+// Resource Group Parameters
+param parHubNetworkingResourceGroupNamePrefix = '{{resource_group_hub_networking_name_prefix||rg-alz-conn}}'
+param parDnsResourceGroupNamePrefix = '{{resource_group_dns_name_prefix||rg-alz-dns}}'
+param parDnsPrivateResolverResourceGroupNamePrefix = '{{resource_group_private_dns_resolver_name_prefix||rg-alz-dnspr}}'
 
+// Hub Networking Parameters
 param hubNetworks = [
-  // ======== Primärer Hub: Germany West Central ========
   {
-    name: 'vnet-alz-germanywestcentral'
-    location: 'germanywestcentral'
+    name: 'vnet-alz-${parLocations[0]}'
+    location: parLocations[0]
     addressPrefixes: [
-      '10.0.0.0/22'          // Anpassen an dein IP-Schema
+      '10.0.0.0/22'
     ]
     deployPeering: true
     dnsServers: []
     peeringSettings: [
       {
-        remoteVirtualNetworkName: 'vnet-alz-northeurope'
+        remoteVirtualNetworkName: 'vnet-alz-${parLocations[1]}'
         allowForwardedTraffic: true
         allowGatewayTransit: false
         allowVirtualNetworkAccess: true
@@ -64,48 +66,47 @@ param hubNetworks = [
       }
     ]
     azureFirewallSettings: {
-      deployAzureFirewall: true             // Auf false setzen um Kosten zu sparen
-      azureFirewallName: 'afw-alz-germanywestcentral'
+      deployAzureFirewall: true
+      azureFirewallName: 'afw-alz-${parLocations[0]}'
       azureSkuTier: 'Standard'
       publicIPAddressObject: {
-        name: 'pip-afw-alz-germanywestcentral'
+        name: 'pip-afw-alz-${parLocations[0]}'
       }
       managementIPAddressObject: {
-        name: 'pip-afw-mgmt-alz-germanywestcentral'
+        name: 'pip-afw-mgmt-alz-${parLocations[0]}'
       }
     }
     bastionHostSettings: {
-      deployBastion: true                   // Auf false setzen um Kosten zu sparen
-      bastionHostSettingsName: 'bas-alz-germanywestcentral'
+      deployBastion: true
+      bastionHostSettingsName: 'bas-alz-${parLocations[0]}'
       skuName: 'Standard'
     }
     vpnGatewaySettings: {
-      deployVpnGateway: false               // Auf true setzen wenn VPN benötigt
-      name: 'vgw-alz-germanywestcentral'
+      deployVpnGateway: true
+      name: 'vgw-alz-${parLocations[0]}'
       skuName: 'VpnGw1AZ'
       vpnMode: 'activeActiveBgp'
       vpnType: 'RouteBased'
       asn: 65515
     }
     expressRouteGatewaySettings: {
-      deployExpressRouteGateway: false      // Auf true setzen wenn ExpressRoute benötigt
-      name: 'ergw-alz-germanywestcentral'
+      deployExpressRouteGateway: true
+      name: 'ergw-alz-${parLocations[0]}'
     }
     privateDnsSettings: {
       deployPrivateDnsZones: true
-      deployDnsPrivateResolver: false
-      privateDnsResolverName: 'dnspr-alz-germanywestcentral'
+      deployDnsPrivateResolver: true
+      privateDnsResolverName: 'dnspr-alz-${parLocations[0]}'
       privateDnsZones: []
     }
     ddosProtectionPlanSettings: {
-      deployDdosProtectionPlan: false       // Auf true setzen - ACHTUNG: ~$2500/Monat
-      name: 'ddos-alz-germanywestcentral'
+      deployDdosProtectionPlan: true
+      name: 'ddos-alz-${parLocations[0]}'
     }
   }
-  // ======== Sekundärer Hub: North Europe ========
   {
-    name: 'vnet-alz-northeurope'
-    location: 'northeurope'
+    name: 'vnet-alz-${parLocations[1]}'
+    location: parLocations[1]
     addressPrefixes: [
       '10.1.0.0/22'
     ]
@@ -113,7 +114,7 @@ param hubNetworks = [
     dnsServers: []
     peeringSettings: [
       {
-        remoteVirtualNetworkName: 'vnet-alz-germanywestcentral'
+        remoteVirtualNetworkName: 'vnet-alz-${parLocations[0]}'
         allowForwardedTraffic: true
         allowGatewayTransit: false
         allowVirtualNetworkAccess: true
@@ -149,31 +150,44 @@ param hubNetworks = [
       }
     ]
     azureFirewallSettings: {
-      deployAzureFirewall: false            // Sekundäre Region optional
-      azureFirewallName: 'afw-alz-northeurope'
+      deployAzureFirewall: true
+      azureFirewallName: 'afw-alz-${parLocations[1]}'
       azureSkuTier: 'Standard'
       publicIPAddressObject: {
-        name: 'pip-afw-alz-northeurope'
+        name: 'pip-afw-alz-${parLocations[1]}'
+      }
+      managementIPAddressObject: {
+        name: 'pip-afw-mgmt-alz-${parLocations[1]}'
       }
     }
     bastionHostSettings: {
-      deployBastion: false
-      bastionHostSettingsName: 'bas-alz-northeurope'
+      deployBastion: true
+      bastionHostSettingsName: 'bas-alz-${parLocations[1]}'
       skuName: 'Standard'
     }
     vpnGatewaySettings: {
-      deployVpnGateway: false
-      name: 'vgw-alz-northeurope'
+      deployVpnGateway: true
+      name: 'vgw-alz-${parLocations[1]}'
+      skuName: 'VpnGw1AZ'
+      vpnMode: 'activeActiveBgp'
+      vpnType: 'RouteBased'
+      asn: 65515
     }
     expressRouteGatewaySettings: {
-      deployExpressRouteGateway: false
-      name: 'ergw-alz-northeurope'
+      deployExpressRouteGateway: true
+      name: 'ergw-alz-${parLocations[1]}'
     }
     privateDnsSettings: {
-      deployPrivateDnsZones: false
-      deployDnsPrivateResolver: false
-      privateDnsResolverName: 'dnspr-alz-northeurope'
-      privateDnsZones: []
+      deployPrivateDnsZones: true
+      deployDnsPrivateResolver: true
+      privateDnsResolverName: 'dnspr-alz-${parLocations[1]}'
+      privateDnsZones: [
+        'privatelink.{regionName}.azurecontainerapps.io'
+        'privatelink.{regionName}.kusto.windows.net'
+        'privatelink.{regionName}.azmk8s.io'
+        'privatelink.{regionName}.prometheus.monitor.azure.com'
+        'privatelink.{regionCode}.backup.windowsazure.com'
+      ]
     }
     ddosProtectionPlanSettings: {
       deployDdosProtectionPlan: false

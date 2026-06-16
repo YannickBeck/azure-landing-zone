@@ -1,170 +1,57 @@
 # ============================================================
-# Azure Landing Zone - Konfigurationsdatei
-# Basiert auf: https://github.com/Azure/Azure-Landing-Zones
-#
-# Ersetze alle <PLATZHALTER> mit deinen echten Werten
+# Platform Landing Zone Starter-Modul-Konfiguration (BEFÜLLT)
+# Wird von Deploy-Accelerator gelesen. Original-Vorlage: examples/platform-landing-zone.yaml
 # ============================================================
 
-# Deployment-Regionen
-locations:
-  primary: germanywestcentral         # Primäre Azure-Region
-  secondary: northeurope              # Sekundäre Azure-Region (optional)
+## Decision 5: Platform Landing Zone Azure Regions
+starter_locations: ["germanywestcentral", "northeurope"]
 
-# Azure Tenant & Subscriptions
-tenant:
-  id: "<TENANT_ID>"                   # Deine Azure Tenant ID (GUID)
+# Management Groups
+# Naming-Pattern: <id-prefix><id><id-postfix>. Prefix/Postfix leer = Microsoft-Standard-IDs.
+management_group_id_prefix: ""
+management_group_id_postfix: ""
+management_group_name_prefix: ""
+management_group_name_postfix: ""
 
-subscriptions:
-  management:
-    id: "<MANAGEMENT_SUBSCRIPTION_ID>"
-    displayName: "ALZ-Management"
-  connectivity:
-    id: "<CONNECTIVITY_SUBSCRIPTION_ID>"
-    displayName: "ALZ-Connectivity"
-  identity:
-    id: "<IDENTITY_SUBSCRIPTION_ID>"
-    displayName: "ALZ-Identity"
-  # Workload Subscriptions (optional)
-  # corp:
-  #   - id: "<CORP_SUB_01_ID>"
-  #     displayName: "Corp-Workload-01"
+management_group_int_root_id: "alz"
+management_group_int_root_name: "Azure Landing Zones"
 
-# Management Group Hierarchie
-# Tenant Root (automatisch)
-# └── alz (Intermediate Root)
-#     ├── alz-platform (Platform)
-#     │   ├── alz-platform-connectivity
-#     │   ├── alz-platform-identity
-#     │   ├── alz-platform-management
-#     │   └── alz-platform-security
-#     ├── alz-landingzones (Landing Zones)
-#     │   ├── alz-landingzones-corp
-#     │   ├── alz-landingzones-online
-#     │   └── alz-landingzones-local
-#     ├── alz-sandbox
-#     └── alz-decommissioned
+management_group_platform_id: "platform"
+management_group_platform_name: "Platform"
 
-managementGroups:
-  intRoot:
-    id: alz
-    displayName: "Azure Landing Zones"
-  platform:
-    id: alz-platform
-    displayName: "Platform"
-    children:
-      - id: alz-platform-connectivity
-        displayName: "Connectivity"
-      - id: alz-platform-identity
-        displayName: "Identity"
-      - id: alz-platform-management
-        displayName: "Management"
-      - id: alz-platform-security
-        displayName: "Security"
-  landingZones:
-    id: alz-landingzones
-    displayName: "Landing Zones"
-    children:
-      - id: alz-landingzones-corp
-        displayName: "Corp"
-      - id: alz-landingzones-online
-        displayName: "Online"
-      - id: alz-landingzones-local
-        displayName: "Local"
-  sandbox:
-    id: alz-sandbox
-    displayName: "Sandbox"
-  decommissioned:
-    id: alz-decommissioned
-    displayName: "Decommissioned"
+management_group_connectivity_id: "connectivity"
+management_group_connectivity_name: "Connectivity"
 
-# Logging-Konfiguration
-logging:
-  resourceGroup: "rg-alz-logging-germanywestcentral"
-  logAnalyticsWorkspace:
-    name: "law-alz-germanywestcentral"
-    sku: "PerGB2018"
-    retentionDays: 365
-    sentinel: false                   # Auf true setzen für Microsoft Sentinel
-    solutions:
-      - ChangeTracking
-  managedIdentity:
-    name: "mi-alz-germanywestcentral"
-  automationAccount:
-    deploy: false                     # Auf true setzen wenn benötigt
-    name: "aa-alz-germanywestcentral"
+management_group_identity_id: "identity"
+management_group_identity_name: "Identity"
 
-# Governance: Schlankes Policy-Set (Built-in Assignments)
-governance:
-  policies:
-    allowedLocations:                 # Deny-Location @ alz
-      - germanywestcentral
-      - northeurope
-    requiredTagName: "Environment"    # Require-RG-Tag @ alz (leer = aus)
-    storageSecureTransferEffect: Deny # Deny-Storage-Http @ alz (Audit | Deny | Disabled)
-    denyNicPublicIpOnCorp: true       # Deny-NIC-PublicIP @ alz-landingzones-corp
-  rbac:
-    # Role Assignments werden in templates/core/governance/rbac/main.bicepparam gepflegt.
-    # Beispiel:
-    # - managementGroupId: alz-platform
-    #   principalId: "<ENTRA_GROUP_OBJECT_ID>"
-    #   roleDefinition: Owner
+management_group_security_id: "security"
+management_group_security_name: "Security"
 
-# Subscription Vending (optional, siehe templates/core/subscription-vending)
-subscriptionVending:
-  enabled: false
-  mode: placement                     # placement | create (create erfordert EA/MCA-Billing-Rolle)
-  targetManagementGroup: alz-landingzones-corp
+management_group_landing_zones_id: "landingzones"
+management_group_landing_zones_name: "Landing Zones"
 
-# Netzwerk-Konfiguration
-networking:
-  type: hubNetworking                 # hubNetworking | virtualWan | none
+management_group_corp_id: "corp"
+management_group_corp_name: "Corp"
 
-  hubNetworking:
-    primaryHub:
-      name: "vnet-alz-germanywestcentral"
-      location: germanywestcentral
-      addressPrefix: "10.0.0.0/22"   # Anpassen an eigenes IP-Schema
-      azureFirewall:
-        deploy: true
-        sku: Standard
-        firewallPolicy:
-          name: "afwp-alz-germanywestcentral"
-          baseRules: true             # DNS/NTP/AzureCloud/Windows-Update, Rest = Deny
-      bastion:
-        deploy: true
-      vpnGateway:
-        deploy: false
-      expressRouteGateway:
-        deploy: false
-      ddosProtection:
-        deploy: false                 # Achtung: ~$2500/Monat
-      privateDnsZones:
-        deploy: true
+management_group_online_id: "online"
+management_group_online_name: "Online"
 
-    secondaryHub:
-      name: "vnet-alz-northeurope"
-      location: northeurope
-      addressPrefix: "10.1.0.0/22"
-      azureFirewall:
-        deploy: false
-      bastion:
-        deploy: false
+management_group_local_id: "local"
+management_group_local_name: "Local"
 
-  # Spoke-Netzwerke je Workload (templates/networking/spoke, optional)
-  spoke:
-    example:
-      workloadName: corp-app01
-      location: germanywestcentral
-      addressPrefix: "10.2.0.0/24"   # Kein Overlap mit den Hubs!
-      firewallTransit: true           # Default-Route ueber die Hub-Firewall
+management_group_decommissioned_id: "decommissioned"
+management_group_decommissioned_name: "Decommissioned"
 
-# Kontaktinformationen für Policies
-contacts:
-  securityEmail: "security@<YOUR_DOMAIN>"
-  operationsEmail: "ops@<YOUR_DOMAIN>"
+management_group_sandbox_id: "sandbox"
+management_group_sandbox_name: "Sandbox"
 
-# Tags (werden auf alle Ressourcen angewendet)
-tags:
-  Environment: Production
-  ManagedBy: Platform Team
-  CostCenter: IT-Platform
+# Resource Groups – Naming-Pattern: <prefix>-<location>
+resource_group_logging_name_prefix: "rg-alz-logging"
+resource_group_hub_networking_name_prefix: "rg-alz-conn"
+resource_group_virtual_wan_name_prefix: "rg-alz-conn"
+resource_group_dns_name_prefix: "rg-alz-dns"
+resource_group_private_dns_resolver_name_prefix: "rg-alz-dnspr"
+
+# Networking: "hubNetworking", "vwanConnectivity" oder "none"
+network_type: "hubNetworking"
