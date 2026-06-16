@@ -595,6 +595,102 @@ def build():
     add_bullet(doc, "Zu prüfen: Anzahl der Standorte, bestehende WAN-Infrastruktur, Routing-Anforderungen")
     add_bullet(doc, "Mögliche Folgestufe: Migration zu Virtual WAN bei Bedarf (Template liegt vor)")
     add_bullet(doc, "Abgrenzung: ExpressRoute/VPN-Konfiguration und IP-Adresskonzept On-Premises sind nicht Teil der Landing Zone")
+
+    doc.add_heading("5.5 Bechtle-Empfehlung: ~€1.050/Monat-Konfiguration", level=2)
+    add_body(doc,
+        "Durch drei gezielte Anpassungen reduziert sich der monatliche Basispreis von "
+        "~€5.800 auf ~€1.050 – ohne den Funktionsumfang der Landing Zone einzuschränken. "
+        "Alle Governance-Objekte (MGs, Policies, RBAC), das Logging-Framework und "
+        "die vollständige Hub-and-Spoke-Topologie mit zentraler Firewall bleiben erhalten."
+    )
+    add_table(doc,
+        ["Anpassung", "Microsoft-Default", "Bechtle-Empfehlung", "Ersparnis"],
+        [
+            ["Azure Firewall SKU",
+             "Premium × 2 Regionen (~€2.200)",
+             "Standard × 1 Region (~€700)",
+             "~€1.500"],
+            ["DDoS Network Protection",
+             "AN (~€2.500/Monat)",
+             "AUS – bei internet-facing Workloads aktivieren",
+             "~€2.500"],
+            ["ExpressRoute Gateway",
+             "AN × 2 Regionen (~€560)",
+             "AUS – bei ER-Leitung aktivieren",
+             "~€560"],
+            ["VPN Gateway",
+             "AN × 2 Regionen (~€280)",
+             "AN × 1 Region (~€140)",
+             "~€140"],
+            ["Azure Bastion",
+             "AN × 2 Regionen (~€240)",
+             "AN × 1 Region (~€120)",
+             "~€120"],
+            ["DNS Private Resolver",
+             "AN × 2 Regionen (~€50)",
+             "AN × 1 Region (~€25)",
+             "~€25"],
+            ["Netzwerk gesamt",
+             "~€5.800",
+             "~€1.050",
+             "~€4.750"],
+        ],
+        col_widths=[2.0, 1.9, 2.1, 1.0]
+    )
+    add_body(doc,
+        "Was bleibt vollständig erhalten:"
+    )
+    add_bullet(doc, "Alle 149 Policy-Definitionen, 42 Initiativen, 123 Assignments – voller Governance-Umfang")
+    add_bullet(doc, "Hub-and-Spoke-Topologie mit zentraler Azure Firewall (Datenverkehr-Inspektion, FQDN-Filterung, Threat Intelligence)")
+    add_bullet(doc, "Azure Bastion für sicheres RDP/SSH ohne öffentliche IPs")
+    add_bullet(doc, "VPN Gateway für On-Premises-Konnektivität (BGP, active-active, ASN 65515)")
+    add_bullet(doc, "Private DNS Zones + DNS Private Resolver für hybride Namensauflösung")
+    add_bullet(doc, "Zentrales Logging (Log Analytics, DCRs, DINE-Policies)")
+    add_bullet(doc, "Alle 5 Custom RBAC-Rollen und 18 Deploy-Stufen")
+
+    add_body(doc, "Was verschoben wird (deferred, nicht gestrichen):")
+    add_bullet(doc,
+        "Sekundäre Region (North Europe): Deployment auf Primärregion beschränkt; "
+        "Ausbau auf zwei Regionen bei Bedarf jederzeit möglich",
+        "Zweite Region"
+    )
+    add_bullet(doc,
+        "Azure Firewall Premium: Standard → Premium-Upgrade ist unterbrechungsfrei möglich; "
+        "Premium-Features (IDPS, TLS-Inspektion, URL-Filterung) bei konkretem Bedarf aktivieren",
+        "Firewall Premium"
+    )
+    add_bullet(doc,
+        "DDoS Network Protection: erst sinnvoll bei internet-facing Workloads mit öffentlichen IPs; "
+        "kann per einzelnem Schalter (deployDdosProtectionPlan: true) nachträglich aktiviert werden",
+        "DDoS Protection"
+    )
+    add_bullet(doc,
+        "ExpressRoute Gateway: erst bei bestellter ER-Leitung relevant; "
+        "VPN Gateway übernimmt in der Zwischenzeit die On-Prem-Anbindung",
+        "ExpressRoute"
+    )
+
+    add_body(doc, "Bicep-Parameter für die Bechtle-Empfehlung (in templates/networking/hubnetworking/main.bicepparam):")
+    code_p = doc.add_paragraph(style="Normal")
+    code_r = code_p.add_run(
+        "azureFirewallSettings:        { deployAzureFirewall: true, azureFirewallTier: 'Standard' }\n"
+        "bastionHostSettings:          { deployBastion: true }\n"
+        "vpnGatewaySettings:           { deployVpnGateway: true }\n"
+        "expressRouteGatewaySettings:  { deployExpressRouteGateway: false }  // bei Bedarf: true\n"
+        "ddosProtectionPlanSettings:   { deployDdosProtectionPlan: false }   // bei Bedarf: true\n"
+        "privateDnsSettings:           { deployPrivateDnsZones: true, deployDnsPrivateResolver: true }\n"
+        "// Sekundär-Hub (northeurope): Deployment-Stufe 17 für zweite Region nicht ausführen"
+    )
+    code_r.font.name = "Courier New"
+    code_r.font.size = Pt(8)
+    doc.add_paragraph()
+
+    p = doc.add_paragraph(style="Standard klein")
+    p.add_run(
+        "Hinweis: Der Wechsel von Firewall Standard auf Premium ist ein In-Place-Upgrade "
+        "ohne Neukonfiguration der Firewall-Regeln. Der Wechsel von einer auf zwei Regionen "
+        "erfordert einen weiteren Bootstrap-Lauf mit aktualisierter Regionskonfiguration."
+    )
     doc.add_page_break()
 
     # ═════════════════════════════════════════════════════════════════════════
@@ -766,53 +862,99 @@ def build():
 
     add_body(doc,
         "Die Kosten der Azure Landing Zone werden primär durch die Netzwerk-Dienste "
-        "bestimmt. Im Microsoft-Standard entstehen ca. € 5.800/Monat. "
-        "Governance-Objekte (MGs, Policies, Rollen), Logging und Identity-Ressourcen "
-        "sind nahezu kostenlos."
-    )
-    add_table(doc,
-        ["Dienst / Komponente", "Kosten/Monat (ca.)", "Region(en)", "Steuerbar"],
-        [
-            ["2× Azure Firewall Premium",                "~€2.800",  "Beide",   "Ja (deployAzureFirewall)"],
-            ["DDoS Network Protection Plan",             "~€2.500",  "Hub 1",   "Ja (deployDdosProtectionPlan)"],
-            ["2× ExpressRoute Gateway",                  "~€560",    "Beide",   "Ja (deployExpressRouteGateway)"],
-            ["2× VPN Gateway (VpnGw1AZ)",                "~€280",    "Beide",   "Ja (deployVpnGateway)"],
-            ["2× Azure Bastion (Standard)",              "~€240",    "Beide",   "Ja (deployBastion)"],
-            ["2× DNS Private Resolver",                  "~€50",     "Beide",   "Ja (deployDnsPrivateResolver)"],
-            ["Private DNS Zones",                        "~€15",     "Beide",   "Nein (empfohlen aktiv)"],
-            ["Log Analytics Workspace",                  "~€50",     "Primär",  "Nein (Kern-Infrastruktur)"],
-            ["Management Groups, Policies, RBAC",        "€0",       "–",       "–"],
-            ["Gesamt (Microsoft-Default)",               "~€5.800",  "Beide",   "–"],
-        ],
-        col_widths=[2.6, 1.4, 0.8, 2.2]
+        "bestimmt. Governance-Objekte (MGs, Policies, RBAC), Logging und "
+        "Identity-Ressourcen sind nahezu kostenlos. Bechtle empfiehlt eine "
+        "zielgerichtete Konfiguration mit ~€1.050/Monat, die alle wesentlichen "
+        "Funktionen enthält und durch nachträgliche Schalter auf den vollen "
+        "Microsoft-Standard (~€5.800/Monat) erweiterbar ist."
     )
 
-    doc.add_heading("Kostenarme Varianten", level=2)
+    doc.add_heading("Kostenvergleich: Varianten im Überblick", level=2)
     add_table(doc,
-        ["Variante", "Konfiguration", "Kosten/Monat", "Enthält"],
+        ["Dienst / Komponente", "Microsoft-Default", "Bechtle-Empfehlung (~€1.050)", "Pilot (€0)"],
         [
-            ["Nur Governance (Empfehlung Start)", "network_type: none",                                "≈ €0 + LAW", "MGs + volles Policy-Set + Logging"],
-            ["Minimales Netzwerk",                 "Alle deploy*-Schalter false; nur VNets + DNS",    "~€15",        "Hub-VNets + Private DNS Zones"],
-            ["Produktionsnetz ohne DDoS",           "deployDdosProtectionPlan: false",                "~€3.300",     "Alle Dienste außer DDoS"],
-            ["Vollständiger Microsoft-Default",     "(Standard)",                                      "~€5.800",     "Alle Dienste in beiden Regionen"],
+            ["Azure Firewall",              "2x Premium ~€2.200", "1x Standard ~€700",   "–"],
+            ["DDoS Network Protection",     "~€2.500",            "–",                    "–"],
+            ["ExpressRoute Gateway",        "2x ~€560",           "–",                    "–"],
+            ["VPN Gateway",                 "2x ~€280",           "1x ~€140",             "–"],
+            ["Azure Bastion",               "2x ~€240",           "1x ~€120",             "–"],
+            ["DNS Private Resolver",        "2x ~€50",            "1x ~€25",              "–"],
+            ["Private DNS Zones",           "~€15",               "~€15",                 "–"],
+            ["Log Analytics Workspace",     "~€50",               "~€50",                 "~€50"],
+            ["MGs / Policies / RBAC",       "€0",                 "€0",                   "€0"],
+            ["Gesamt",                      "~€5.800",            "~€1.050",              "ca. €50"],
+            ["Regionen",                    "GWC + NE (beide)",   "GWC (Primär)",         "GWC"],
+            ["Netzwerk-Typ",                "hubNetworking",      "hubNetworking",        "none"],
         ],
-        col_widths=[2.0, 2.7, 1.0, 2.3]
+        col_widths=[2.1, 1.6, 2.0, 1.3]
     )
 
-    doc.add_heading("Empfehlung: Gestufter Ausbau", level=2)
-    add_bullet(doc, "Schritt 1 (≈ €0): network_type: none – Governance-Fundament aufbauen (MGs, Policies im DoNotEnforce, Logging)")
-    add_bullet(doc, "Schritt 2 (≈ €15/Monat): Hub-VNets + Private DNS Zones – Netzwerk-Grundstruktur ohne kostspielige Dienste")
-    add_bullet(doc, "Schritt 3 (nach Bedarf): Azure Firewall + Bastion – wenn Workloads Konnektivität und sicheren Zugriff brauchen")
-    add_bullet(doc, "Schritt 4 (nach Bedarf): VPN/ExpressRoute-Gateways – wenn On-Premises-Anbindung erforderlich")
-    add_bullet(doc, "Schritt 5 (bewusste Entscheidung): DDoS Protection – teuerster Einzelposten (~€2.500/Monat); nur bei Internet-facing Workloads mit DDoS-Risiko sinnvoll")
+    doc.add_heading("Bechtle-Empfehlung: ~€1.050/Monat", level=2)
+    add_body(doc,
+        "Die Bechtle-Konfiguration stellt alle produktionsrelevanten Netzwerk- und "
+        "Sicherheitsdienste in der Primärregion (Germany West Central) bereit. "
+        "Kein Funktionsverlust gegenueber dem Microsoft-Default – lediglich "
+        "Dienste, die erst bei konkretem Bedarf relevant werden, sind initial deaktiviert."
+    )
+    add_table(doc,
+        ["Funktion", "Status", "Aktivierbar durch"],
+        [
+            ["Management Groups (12 MGs)",              "Aktiv", "–"],
+            ["Policy-Set (149 Defs / 123 Assignments)", "Aktiv", "–"],
+            ["Zentrales Logging (LAW + 3 DCRs)",        "Aktiv", "–"],
+            ["Hub-and-Spoke-Topologie",                 "Aktiv", "–"],
+            ["Azure Firewall (Standard, 1 Region)",     "Aktiv", "–"],
+            ["Azure Bastion (1 Region)",                "Aktiv", "–"],
+            ["VPN Gateway (1 Region)",                  "Aktiv", "–"],
+            ["Private DNS Zones",                       "Aktiv", "–"],
+            ["DNS Private Resolver (1 Region)",         "Aktiv", "–"],
+            ["Firewall Premium (IDPS, TLS)",      "Deferred", "azureFirewallTier: Premium (In-Place-Upgrade, kein Rebuild)"],
+            ["DDoS Network Protection",           "Deferred", "deployDdosProtectionPlan: true (bei internet-facing Workloads)"],
+            ["ExpressRoute Gateway",              "Deferred", "deployExpressRouteGateway: true (bei ER-Leitungsbestellung)"],
+            ["Sekundaere Region (North Europe)",  "Deferred", "Zweiten Hub-Deployment-Lauf ausfuehren"],
+        ],
+        col_widths=[2.6, 0.8, 3.6]
+    )
+
+    doc.add_heading("Gestufter Ausbau", level=2)
+    add_table(doc,
+        ["Stufe", "Konfiguration", "Kosten/Monat", "Ausloser"],
+        [
+            ["1 – Governance-Pilot",
+             "network_type: none",
+             "ca. €50 (nur LAW)",
+             "Sofort – MGs, Policies, Logging, kein Kostenrisiko"],
+            ["2 – Bechtle-Empfehlung",
+             "Firewall Standard, 1 Region, kein DDoS/ER",
+             "~€1.050",
+             "Erste Workloads; On-Prem-Anbindung geplant"],
+            ["3 – Geo-Redundanz",
+             "+ Sekundar-Hub North Europe",
+             "~€1.800",
+             "SLA-Anforderungen erfordern zweite Region"],
+            ["4 – Firewall Premium",
+             "azureFirewallTier: Premium",
+             "~€2.400",
+             "IDPS / TLS-Inspektion / URL-Filterung benoetigt"],
+            ["5 – DDoS Protection",
+             "deployDdosProtectionPlan: true",
+             "~€4.900",
+             "Internet-facing Workloads mit DDoS-Risiko"],
+            ["6 – Microsoft-Default",
+             "Alle Dienste, beide Regionen",
+             "~€5.800",
+             "Vollstaendiger Enterprise-Standard"],
+        ],
+        col_widths=[1.5, 2.3, 1.0, 2.2]
+    )
     p = doc.add_paragraph(style="Standard klein")
     p.add_run(
-        "DDoS Network Protection ist im Microsoft-Default aktiviert (~€2.500/Monat). "
-        "Diese Entscheidung sollte bewusst nach Risikobewertung getroffen werden."
+        "Alle Stufen sind additive Aenderungen an bestehenden Parameter-Dateien. "
+        "Kein Rueckbau von bereits deployten Ressourcen erforderlich. "
+        "Der Standard-zu-Premium-Upgrade der Azure Firewall erfolgt ohne Unterbrechung "
+        "und ohne Neukonfiguration der Firewall-Regeln."
     )
     doc.add_page_break()
-
-    # ═════════════════════════════════════════════════════════════════════════
     # 11. ROADMAP, PHASEN UND GATES
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("11. Roadmap, Phasen und Gates", level=1)

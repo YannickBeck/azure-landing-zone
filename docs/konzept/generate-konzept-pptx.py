@@ -289,19 +289,19 @@ def build():
     # ── 5. Netzwerk-Architektur ───────────────────────────────────────────────
     divider(prs,
         "5  ·  Netzwerk-Architektur",
-        "Hub-and-Spoke: Azure Firewall · Bastion · Private DNS – in zwei Regionen"
+        "Hub-and-Spoke · Bechtle-Empfehlung: 1 Region · Firewall Standard · ~€1.050/Monat"
     )
-    content(prs, "Netzwerk-Architektur", "Hub-and-Spoke: Dienste und Kosten", [
-        ("2× Hub-VNets: GWC 10.0.0.0/22 (primär) + NE 10.1.0.0/22 (sekundär), "
-         "bidirektionales Peering", 0),
-        ("Azure Firewall Premium: 2× ~€1.100/Monat  →  deployAzureFirewall", 0),
-        ("Azure Bastion (Standard): 2× ~€120/Monat  →  deployBastion", 0),
-        ("VPN Gateway (VpnGw1AZ, BGP, ASN 65515): 2× ~€140/Monat  →  deployVpnGateway", 0),
-        ("ExpressRoute Gateway: 2× ~€280/Monat  →  deployExpressRouteGateway", 0),
-        ("DDoS Network Protection: ~€2.500/Monat – teuerster Einzelposten!  "
-         "→  deployDdosProtectionPlan", 0),
-        ("Private DNS Zones (alle Azure-Zonen): ~€15/Monat – empfohlen aktiv", 0),
-        ("Alternative: network_type: none → MGs + Policies + Logging ≈ €0", 0),
+    content(prs, "Netzwerk-Architektur", "Hub-and-Spoke: Bechtle-Empfehlung vs. Microsoft-Default", [
+        ("Bechtle-Empfehlung: 1× Hub-VNet GWC 10.0.0.0/22 – alle Kernfunktionen, "
+         "eine Region, ~€1.050/Monat", 0),
+        ("Microsoft-Default: 2× Hub-VNets (GWC + NE) – alle Dienste, beide Regionen, "
+         "~€5.800/Monat", 0),
+        ("Azure Firewall Standard (1×): ~€700/Monat  [Default: Premium 2× = ~€2.200]", 0),
+        ("Azure Bastion Standard (1×): ~€120/Monat  [Default: 2× = €240]", 0),
+        ("VPN Gateway VpnGw1AZ (1×): ~€140/Monat  [Default: 2× = €280]", 0),
+        ("ExpressRoute Gateway: deaktiviert – bei ER-Leitung aktivieren [Default: 2× = €560]", 0),
+        ("DDoS Protection: deaktiviert – bei internet-facing Workloads aktivieren [Default: €2.500]", 0),
+        ("Private DNS Zones + DNS Resolver: aktiv – unveraendert  ~€40/Monat", 0),
     ])
 
     # ── 6. Sicherheit ─────────────────────────────────────────────────────────
@@ -394,20 +394,21 @@ def build():
     # ── 10. Kosten & Sizing ───────────────────────────────────────────────────
     divider(prs,
         "10  ·  Kosten und Kostensteuerung",
-        "Von ≈€0 (Governance only) bis ≈€5.800/Monat (Full Default)"
+        "Bechtle-Empfehlung: ~€1.050/Monat – voller Funktionsumfang, eine Region"
     )
     content(prs, "Kosten und Kostensteuerung",
-            "Kosten-Varianten – gestufter Ausbau empfohlen", [
-        ("Nur Governance (Pilot): network_type: none → "
-         "MGs + volles Policy-Set + Logging  ≈ €0 + LAW", 0),
-        ("Minimales Netzwerk: Hub-VNets + Private DNS Zones  ≈ €15/Monat", 0),
-        ("Produktionsnetz ohne DDoS: alle Dienste außer DDoS  ≈ €3.300/Monat", 0),
-        ("Vollständiger Microsoft-Default: beide Regionen, alle Dienste  "
-         "≈ €5.800/Monat", 0),
-        ("DDoS Protection im Default AN: ~€2.500/Monat – "
-         "bewusste Entscheidung nach Risikobewertung erforderlich!", 0),
-        ("Empfehlung: Governance → VNets/DNS → Firewall/Bastion → "
-         "Gateways → DDoS (je nach Bedarf)", 0),
+            "Gestufter Ausbau: €0 → €1.050 → €5.800", [
+        ("Stufe 1 – Governance-Pilot: network_type: none → "
+         "MGs + volles Policy-Set + Logging  ca. €50/Monat (nur LAW)", 0),
+        ("Stufe 2 – Bechtle-Empfehlung: Firewall Standard, 1 Region, "
+         "kein DDoS/ER  →  ~€1.050/Monat", 0),
+        ("  Firewall Standard 1×: ~€700  |  Bastion 1×: ~€120  |  VPN GW 1×: ~€140  "
+         "|  DNS: ~€40  |  LAW: ~€50", 1),
+        ("Stufe 3 – Geo-Redundanz: + Sekundar-Hub NE  →  ~€1.800/Monat", 0),
+        ("Stufe 4 – Firewall Premium: IDPS / TLS / URL-Filterung  →  ~€2.400/Monat", 0),
+        ("Stufe 5 – DDoS Protection: bei internet-facing Workloads  →  ~€4.900/Monat", 0),
+        ("Stufe 6 – Microsoft-Default: alle Dienste, beide Regionen  →  ~€5.800/Monat", 0),
+        ("Alle Stufen sind additive Aenderungen – kein Rueckbau erforderlich", 0),
     ])
 
     # ── 11. Roadmap & Phasen ──────────────────────────────────────────────────
