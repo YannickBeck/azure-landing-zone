@@ -18,7 +18,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE = os.path.join(BASE_DIR, "bechtle-brand", "VORLAGE_Bechtle_Management_Summary.docx")
+TEMPLATE = os.path.join(BASE_DIR, "bechtle-brand", "Word", "VORLAGE_Bechtle_Management_Summary.docx")
 OUTPUT   = os.path.join(BASE_DIR, "Word", "Azure-Landing-Zone-Konzept.docx")
 
 # Platzhalter – ersetzen, sobald Kundenname bekannt ist
