@@ -477,6 +477,13 @@ def build():
         "bezogen über avm/ptn/alz/empty:0.3.6. Statt eines schlanken Eigenbau-Sets "
         "wird das vollständige, von Microsoft gepflegte Policy-Framework ausgerollt."
     )
+    p = doc.add_paragraph(style="Standard klein")
+    run = p.add_run(
+        "▶ Vollständige Referenz: Alle 12 Management Groups, 149 Policy-Definitionen, 42 Initiativen, "
+        "123 Assignments, 5 RBAC-Rollen und 20 Bicep-Module sind konkret und namentlich dokumentiert in: "
+        "Azure-Landing-Zone-ALZ-Referenz.docx"
+    )
+    run.bold = True
     add_table(doc,
         ["Komponente", "Anzahl", "Beschreibung"],
         [
