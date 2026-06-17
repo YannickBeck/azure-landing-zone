@@ -12,19 +12,19 @@ using '../../templates/networking/hubnetworking/main.bicep'
 //   - Präfix 'smoke' zur Unterscheidung
 
 param parTags = {
-  Environment: 'Smoke'
+  Environment: 'PoC'
   ManagedBy: 'Platform Team'
   CostCenter: 'IT-Demo'
 }
 
 param parEnableTelemetry = false
 
-param parHubNetworkingResourceGroupNamePrefix = 'rg-alz-smoke-conn'
-param parDnsResourceGroupNamePrefix = 'rg-alz-smoke-dns'
+param parHubNetworkingResourceGroupNamePrefix = 'rg-alz-poc-conn'
+param parDnsResourceGroupNamePrefix = 'rg-alz-poc-dns'
 
 param hubNetworks = [
   {
-    name: 'vnet-alz-smoke-gwe'
+    name: 'vnet-alz-poc-gwe'
     location: 'germanywestcentral'
     addressPrefixes: [
       '10.0.0.0/24'
@@ -64,21 +64,21 @@ param hubNetworks = [
 
     azureFirewallSettings: {
       deployAzureFirewall: false
-      azureFirewallName: 'afw-alz-smoke-gwe'
+      azureFirewallName: 'afw-alz-poc-gwe'
       azureSkuTier: 'Standard'
-      publicIPAddressObject: { name: 'pip-afw-alz-smoke-gwe' }
-      managementIPAddressObject: { name: 'pip-afw-mgmt-alz-smoke-gwe' }
+      publicIPAddressObject: { name: 'pip-afw-alz-poc-gwe' }
+      managementIPAddressObject: { name: 'pip-afw-mgmt-alz-poc-gwe' }
     }
 
     bastionHostSettings: {
       deployBastion: false
-      bastionHostSettingsName: 'bas-alz-smoke-gwe'
+      bastionHostSettingsName: 'bas-alz-poc-gwe'
       skuName: 'Standard'
     }
 
     vpnGatewaySettings: {
       deployVpnGateway: false
-      name: 'vgw-alz-smoke-gwe'
+      name: 'vgw-alz-poc-gwe'
       skuName: 'VpnGw1AZ'
       vpnMode: 'activeActiveBgp'
       vpnType: 'RouteBased'
@@ -87,19 +87,19 @@ param hubNetworks = [
 
     expressRouteGatewaySettings: {
       deployExpressRouteGateway: false
-      name: 'ergw-alz-smoke-gwe'
+      name: 'ergw-alz-poc-gwe'
     }
 
     privateDnsSettings: {
       deployPrivateDnsZones: true     // Testen, dass DNS-Zonen korrekt deployen
       deployDnsPrivateResolver: false
-      privateDnsResolverName: 'dnspr-alz-smoke-gwe'
+      privateDnsResolverName: 'dnspr-alz-poc-gwe'
       privateDnsZones: []
     }
 
     ddosProtectionPlanSettings: {
       deployDdosProtectionPlan: false
-      name: 'ddos-alz-smoke'
+      name: 'ddos-alz-poc'
     }
   }
 ]

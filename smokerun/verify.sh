@@ -42,36 +42,36 @@ check "Corp-Policies vorhanden (Deny-Public-IP)" \
 
 # ─── Logging ─────────────────────────────────────────────────────────────
 hdr "Logging"
-check "Resource Group vorhanden: rg-alz-smoke-logging-gwe" \
-  "az group show -n rg-alz-smoke-logging-gwe"
+check "Resource Group vorhanden: rg-alz-poc-logging-gwe" \
+  "az group show -n rg-alz-poc-logging-gwe"
 
-check "Log Analytics Workspace: law-alz-smoke-gwe" \
-  "az monitor log-analytics workspace show -g rg-alz-smoke-logging-gwe -n law-alz-smoke-gwe"
+check "Log Analytics Workspace: law-alz-poc-gwe" \
+  "az monitor log-analytics workspace show -g rg-alz-poc-logging-gwe -n law-alz-poc-gwe"
 
-check "Managed Identity: mi-alz-smoke-gwe" \
-  "az identity show -g rg-alz-smoke-logging-gwe -n mi-alz-smoke-gwe"
+check "Managed Identity: mi-alz-poc-gwe" \
+  "az identity show -g rg-alz-poc-logging-gwe -n mi-alz-poc-gwe"
 
 check "DCR VM Insights vorhanden" \
-  "az monitor data-collection rule show -g rg-alz-smoke-logging-gwe -n dcr-vmi-alz-smoke-gwe"
+  "az monitor data-collection rule show -g rg-alz-poc-logging-gwe -n dcr-vmi-alz-poc-gwe"
 
 check "DCR Change Tracking vorhanden" \
-  "az monitor data-collection rule show -g rg-alz-smoke-logging-gwe -n dcr-ct-alz-smoke-gwe"
+  "az monitor data-collection rule show -g rg-alz-poc-logging-gwe -n dcr-ct-alz-poc-gwe"
 
 # ─── Netzwerk ─────────────────────────────────────────────────────────────
 hdr "Netzwerk"
-check "Resource Group vorhanden: rg-alz-smoke-conn-germanywestcentral" \
-  "az group show -n rg-alz-smoke-conn-germanywestcentral"
+check "Resource Group vorhanden: rg-alz-poc-conn-germanywestcentral" \
+  "az group show -n rg-alz-poc-conn-germanywestcentral"
 
-check "Hub VNet vorhanden: vnet-alz-smoke-gwe" \
-  "az network vnet show -g rg-alz-smoke-conn-germanywestcentral -n vnet-alz-smoke-gwe"
+check "Hub VNet vorhanden: vnet-alz-poc-gwe" \
+  "az network vnet show -g rg-alz-poc-conn-germanywestcentral -n vnet-alz-poc-gwe"
 
 check "AzureFirewallSubnet vorhanden" \
-  "az network vnet subnet show -g rg-alz-smoke-conn-germanywestcentral --vnet-name vnet-alz-smoke-gwe -n AzureFirewallSubnet"
+  "az network vnet subnet show -g rg-alz-poc-conn-germanywestcentral --vnet-name vnet-alz-poc-gwe -n AzureFirewallSubnet"
 
-check "DNS Resource Group vorhanden: rg-alz-smoke-dns-germanywestcentral" \
-  "az group show -n rg-alz-smoke-dns-germanywestcentral"
+check "DNS Resource Group vorhanden: rg-alz-poc-dns-germanywestcentral" \
+  "az group show -n rg-alz-poc-dns-germanywestcentral"
 
-DNS_COUNT=$(az network private-dns zone list -g rg-alz-smoke-dns-germanywestcentral --query 'length(@)' -o tsv 2>/dev/null || echo 0)
+DNS_COUNT=$(az network private-dns zone list -g rg-alz-poc-dns-germanywestcentral --query 'length(@)' -o tsv 2>/dev/null || echo 0)
 if [ "${DNS_COUNT:-0}" -ge 10 ]; then
   ok "Private DNS Zones: $DNS_COUNT Zonen deployed"
   ((PASS++)) || true
@@ -86,6 +86,6 @@ echo ""
 
 if [ "$FAIL" -gt 0 ]; then
   echo -e "${YELLOW}Tipp:${RESET} Fehlgeschlagene Checks → Deployment noch nicht abgeschlossen oder Fehler aufgetreten."
-  echo -e "      Logs prüfen: az deployment tenant list --query '[?starts_with(name,\`alz-smoke\`)]' -o table"
+  echo -e "      Logs prüfen: az deployment tenant list --query '[?starts_with(name,\`alz-poc\`)]' -o table"
   exit 1
 fi

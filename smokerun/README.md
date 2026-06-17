@@ -67,7 +67,7 @@ smokerun/
 |-----------|-----------|-----------|
 | Regionen | 1 (germanywestcentral) | 2 (GWC + NE) |
 | Log-Retention | 30 Tage | 365 Tage |
-| Ressource-Präfix | `alz-smoke-*` | `alz-*` |
+| Ressource-Präfix | `alz-poc-*` | `alz-*` |
 | Hub-Peering | nein | ja (bidirektional) |
 | `deployAzureFirewall` | false | true |
 | `deployBastion` | false | true |

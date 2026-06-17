@@ -30,9 +30,9 @@ az account set --subscription "$SUB_ID"
 # ─── Resource Groups ──────────────────────────────────────────────────────
 hdr "Resource Groups löschen"
 for rg in \
-  rg-alz-smoke-logging-gwe \
-  rg-alz-smoke-conn-germanywestcentral \
-  rg-alz-smoke-dns-germanywestcentral; do
+  rg-alz-poc-logging-gwe \
+  rg-alz-poc-conn-germanywestcentral \
+  rg-alz-poc-dns-germanywestcentral; do
   if az group show -n "$rg" &>/dev/null; then
     step "Lösche: $rg"
     az group delete -n "$rg" --yes --no-wait
@@ -45,9 +45,9 @@ done
 echo ""
 step "Warte auf Löschung der Resource Groups (max. 3 Minuten)..."
 for rg in \
-  rg-alz-smoke-logging-gwe \
-  rg-alz-smoke-conn-germanywestcentral \
-  rg-alz-smoke-dns-germanywestcentral; do
+  rg-alz-poc-logging-gwe \
+  rg-alz-poc-conn-germanywestcentral \
+  rg-alz-poc-dns-germanywestcentral; do
   timeout 180 bash -c "until ! az group show -n '$rg' &>/dev/null; do sleep 10; done" \
     && ok "Gelöscht: $rg" \
     || echo -e "${YELLOW}Timeout: $rg evtl. noch aktiv – manuell prüfen${RESET}"

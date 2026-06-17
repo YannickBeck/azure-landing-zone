@@ -76,7 +76,7 @@ if [ "$SKIP_WHATIF" = false ]; then
 
   step "What-If: Management Groups..."
   az deployment tenant create \
-    --name "alz-smoke-mg-whatif-$TS" \
+    --name "alz-poc-mg-whatif-$TS" \
     --location "$LOCATION" \
     --template-file "$ROOT_DIR/templates/core/governance/mgmt-groups/int-root/main.bicep" \
     --parameters "$PARAMS_DIR/mgmt-groups.bicepparam" \
@@ -84,7 +84,7 @@ if [ "$SKIP_WHATIF" = false ]; then
 
   step "What-If: Logging..."
   az deployment sub create \
-    --name "alz-smoke-log-whatif-$TS" \
+    --name "alz-poc-log-whatif-$TS" \
     --location "$LOCATION" \
     --template-file "$ROOT_DIR/templates/core/logging/main.bicep" \
     --parameters "$PARAMS_DIR/logging.bicepparam" \
@@ -92,7 +92,7 @@ if [ "$SKIP_WHATIF" = false ]; then
 
   step "What-If: Hub Networking..."
   az deployment sub create \
-    --name "alz-smoke-net-whatif-$TS" \
+    --name "alz-poc-net-whatif-$TS" \
     --location "$LOCATION" \
     --template-file "$ROOT_DIR/templates/networking/hubnetworking/main.bicep" \
     --parameters "$PARAMS_DIR/hubnetworking.bicepparam" \
@@ -110,7 +110,7 @@ fi
 header "Stufe 2 – Management Groups deployen"
 step "Intermediate Root MG + Policy-Assignments..."
 az deployment tenant create \
-  --name "alz-smoke-mg-$TS" \
+  --name "alz-poc-mg-$TS" \
   --location "$LOCATION" \
   --template-file "$ROOT_DIR/templates/core/governance/mgmt-groups/int-root/main.bicep" \
   --parameters "$PARAMS_DIR/mgmt-groups.bicepparam" \
@@ -119,7 +119,7 @@ ok "Management Groups deployed"
 
 step "Landing Zones MGs..."
 az deployment tenant create \
-  --name "alz-smoke-lz-$TS" \
+  --name "alz-poc-lz-$TS" \
   --location "$LOCATION" \
   --template-file "$ROOT_DIR/templates/core/governance/mgmt-groups/landingzones/main.bicep" \
   --parameters "$ROOT_DIR/templates/core/governance/mgmt-groups/landingzones/main.bicepparam" \
@@ -128,12 +128,12 @@ ok "Landing Zone MGs deployed"
 
 step "Sandbox + Decommissioned MGs..."
 az deployment tenant create \
-  --name "alz-smoke-sb-$TS" --location "$LOCATION" \
+  --name "alz-poc-sb-$TS" --location "$LOCATION" \
   --template-file "$ROOT_DIR/templates/core/governance/mgmt-groups/sandbox/main.bicep" \
   --parameters "$ROOT_DIR/templates/core/governance/mgmt-groups/sandbox/main.bicepparam" \
   --output none
 az deployment tenant create \
-  --name "alz-smoke-dc-$TS" --location "$LOCATION" \
+  --name "alz-poc-dc-$TS" --location "$LOCATION" \
   --template-file "$ROOT_DIR/templates/core/governance/mgmt-groups/decommissioned/main.bicep" \
   --parameters "$ROOT_DIR/templates/core/governance/mgmt-groups/decommissioned/main.bicepparam" \
   --output none
@@ -144,7 +144,7 @@ header "Stufe 3 – Logging deployen"
 az account set --subscription "$SUB_ID"
 step "Log Analytics + DCRs + Managed Identity..."
 az deployment sub create \
-  --name "alz-smoke-log-$TS" \
+  --name "alz-poc-log-$TS" \
   --location "$LOCATION" \
   --template-file "$ROOT_DIR/templates/core/logging/main.bicep" \
   --parameters "$PARAMS_DIR/logging.bicepparam" \
@@ -155,7 +155,7 @@ ok "Logging deployed"
 header "Stufe 4 – Hub Networking deployen (ohne Firewall/Bastion)"
 step "Hub VNet + Subnetze + Private DNS Zones..."
 az deployment sub create \
-  --name "alz-smoke-net-$TS" \
+  --name "alz-poc-net-$TS" \
   --location "$LOCATION" \
   --template-file "$ROOT_DIR/templates/networking/hubnetworking/main.bicep" \
   --parameters "$PARAMS_DIR/hubnetworking.bicepparam" \
