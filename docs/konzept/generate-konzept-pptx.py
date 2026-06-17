@@ -13,9 +13,10 @@ Abhängigkeit  : python-pptx  (pip install python-pptx)
 
 import os
 from pptx import Presentation
-from pptx.util import Pt
+from pptx.util import Pt, Inches
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGES   = os.path.join(BASE_DIR, "images")
 TEMPLATE  = os.path.join(BASE_DIR, "bechtle-brand", "Powerpoint",
                          "VORLAGE_Bechtle_Praesentation.pptx")
 OUTPUT    = os.path.join(BASE_DIR, "Powerpoint", "Azure-Landing-Zone-Konzept.pptx")
@@ -155,6 +156,29 @@ def content(prs, breadcrumb, title, bullets, size=13):
     return slide
 
 
+def picture_slide(prs, title, filename, caption=None):
+    """Folie mit Titel und Vollbild-Grafik (Layout 13 – Nur Titel)."""
+    slide = prs.slides.add_slide(sl(prs, 13))
+    set_text(slide, 0, title, size=18)
+    img_path = os.path.join(IMAGES, filename)
+    if os.path.exists(img_path):
+        slide.shapes.add_picture(
+            img_path,
+            left=Inches(0.3),
+            top=Inches(1.35),
+            width=Inches(12.7)
+        )
+    if caption:
+        from pptx.util import Pt as _Pt
+        from pptx.dml.color import RGBColor as _RGB
+        txBox = slide.shapes.add_textbox(Inches(0.3), Inches(7.0), Inches(12.7), Inches(0.4))
+        tf = txBox.text_frame
+        tf.text = caption
+        tf.paragraphs[0].runs[0].font.size = _Pt(8)
+        tf.paragraphs[0].runs[0].font.color.rgb = _RGB(0x59, 0x59, 0x59)
+    return slide
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Hauptfunktion
 # ─────────────────────────────────────────────────────────────────────────────
@@ -258,6 +282,16 @@ def build():
         ("Subscription-Strategie: Single-Sub für Pilot → "
          "4 dedizierte Platform-Subs für Produktion", 0),
     ])
+    picture_slide(prs,
+        "Zielarchitektur: Azure Landing Zone – Hub-and-Spoke",
+        "alz-hub-spoke.png",
+        "Quelle: Microsoft Cloud Adoption Framework · learn.microsoft.com"
+    )
+    picture_slide(prs,
+        "Zielarchitektur: Management Group Hierarchie",
+        "alz-mg-hierarchy.png",
+        "Quelle: Microsoft Cloud Adoption Framework · learn.microsoft.com"
+    )
 
     # ── 4. Governance & Policies ──────────────────────────────────────────────
     divider(prs,
@@ -303,6 +337,12 @@ def build():
         ("DDoS Protection: deaktiviert – bei internet-facing Workloads aktivieren [Default: €2.500]", 0),
         ("Private DNS Zones + DNS Resolver: aktiv – unveraendert  ~€40/Monat", 0),
     ])
+    picture_slide(prs,
+        "Netzwerk-Architektur: Hub-and-Spoke-Topologie",
+        "alz-hub-spoke.png",
+        "Connectivity Subscription: Firewall · Bastion · VPN/ExpressRoute · DNS Private Resolver  "
+        "| Quelle: Microsoft Cloud Adoption Framework"
+    )
 
     # ── 6. Sicherheit ─────────────────────────────────────────────────────────
     divider(prs,

@@ -14,10 +14,12 @@ Abhängigkeit  : python-docx  (pip install python-docx)
 import os
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGES   = os.path.join(BASE_DIR, "images")
 TEMPLATE = os.path.join(BASE_DIR, "bechtle-brand", "Word", "VORLAGE_Bechtle_Management_Summary.docx")
 OUTPUT   = os.path.join(BASE_DIR, "Word", "Azure-Landing-Zone-Konzept.docx")
 
@@ -60,6 +62,20 @@ def add_bullet(doc, text: str, bold_prefix: str = None):
         r.bold = True
     p.add_run(text)
     return p
+
+
+def add_img(doc, filename, caption=None, width=Inches(6.5)):
+    """Bild zentriert einfügen; caption in 'Standard klein'."""
+    path = os.path.join(IMAGES, filename)
+    if not os.path.exists(path):
+        return
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.add_run().add_picture(path, width=width)
+    if caption:
+        cp = doc.add_paragraph(caption, style="Standard klein")
+        cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc.add_paragraph()
 
 
 def add_table(doc, headers, rows, col_widths=None):
@@ -347,6 +363,16 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("3. Zielarchitektur", level=1)
 
+    add_body(doc,
+        "Die nachfolgende Abbildung zeigt die vollständige Azure Landing Zone-Zielarchitektur "
+        "auf Basis des Hub-and-Spoke-Modells: Management-Group-Hierarchie, Subscriptions, "
+        "Netzwerktopologie, Identität, Sicherheit und DevOps-Pipeline im Überblick."
+    )
+    add_img(doc, "alz-hub-spoke.png",
+        "Abb. 1: Azure Landing Zone – Hub-and-Spoke-Zielarchitektur "
+        "(Quelle: Microsoft Cloud Adoption Framework, learn.microsoft.com)",
+        width=Inches(6.8))
+
     doc.add_heading("3.1 Management-Group-Hierarchie", level=2)
     add_body(doc,
         "Die Management-Group-Hierarchie strukturiert alle Azure-Subscriptions des Kunden "
@@ -392,6 +418,10 @@ def build():
         ],
         col_widths=[2.3, 1.8, 2.9]
     )
+    add_img(doc, "alz-mg-hierarchy.png",
+        "Abb. 2: Management-Group-Hierarchie mit Policy-Vererbung "
+        "(Quelle: Microsoft Cloud Adoption Framework)",
+        width=Inches(5.8))
 
     doc.add_heading("3.2 Subscription-Strategie", level=2)
     add_body(doc,
@@ -532,6 +562,11 @@ def build():
         "Es werden zwei Hub-VNets deployed – eines je Region – die bidirektional "
         "gepeert sind. Spokes werden pro Region an den jeweiligen Hub angebunden."
     )
+    add_img(doc, "alz-hub-spoke.png",
+        "Abb. 3: Hub-and-Spoke-Netzwerktopologie – Connectivity Subscription mit Firewall, "
+        "Bastion, VPN/ExpressRoute und DNS Private Resolver als zentrale Shared Services "
+        "(Quelle: Microsoft Cloud Adoption Framework)",
+        width=Inches(6.8))
 
     doc.add_heading("5.2 Subnetze und Dienste", level=2)
     add_table(doc,
