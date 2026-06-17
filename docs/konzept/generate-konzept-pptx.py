@@ -138,7 +138,7 @@ def agenda_slide(prs):
 
 
 def divider(prs, title, subtitle, facts=None):
-    """Kapitel-Trenner-Folie (Divider Number / Icon)."""
+    """Kapitel-Trenner-Folie (Layout 6 – Divider Number / Icon)."""
     slide = prs.slides.add_slide(sl(prs, L_DIVIDER))
     set_text(slide, 0, title)
     set_text(slide, 1, subtitle)
@@ -148,11 +148,51 @@ def divider(prs, title, subtitle, facts=None):
 
 
 def content(prs, breadcrumb, title, bullets, size=13):
-    """Standard-Inhalts-Folie (Titel und Inhalt)."""
+    """Standard-Inhalts-Folie (Layout 14 – Titel und Inhalt)."""
     slide = prs.slides.add_slide(sl(prs, L_CONTENT))
     set_text(slide, 1, breadcrumb)
     set_text(slide, 0, title)
     set_bullets(slide, 13, bullets, size=size)
+    return slide
+
+
+def highlight(prs, breadcrumb, statement, body=None):
+    """Layout 10 – Highlight Dark: Key-Statement auf dunklem Hintergrund."""
+    slide = prs.slides.add_slide(sl(prs, 10))
+    set_text(slide, 1, breadcrumb, size=11)
+    set_text(slide, 0, statement, size=22, bold=True)
+    if body:
+        set_text(slide, 13, body, size=12)
+    return slide
+
+
+def compare(prs, breadcrumb, title, left_title, left_items,
+            right_title, right_items, size=12):
+    """Layout 16 – 2x Text: Zwei-Spalten-Vergleich."""
+    slide = prs.slides.add_slide(sl(prs, 16))
+    set_text(slide, 1, breadcrumb)
+    set_text(slide, 0, title)
+    set_bullets(slide, 13, [(left_title, 0)] + [(t, 1) for t in left_items], size=size)
+    set_bullets(slide, 14, [(right_title, 0)] + [(t, 1) for t in right_items], size=size)
+    return slide
+
+
+def diagram_slide(prs, breadcrumb, title, img_file, bullets, big=False):
+    """
+    Layout 19 (big=False) oder 20 (big=True) – Text links, Bild rechts.
+    Nutzt den nativen PICTURE-Placeholder (PH14) statt manuell positionierter Bilder.
+    """
+    layout_idx = 20 if big else 19
+    slide = prs.slides.add_slide(sl(prs, layout_idx))
+    set_text(slide, 1, breadcrumb)
+    set_text(slide, 0, title)
+    if bullets:
+        set_bullets(slide, 13, bullets, size=11)
+    img_path = os.path.join(IMAGES, img_file)
+    if os.path.exists(img_path):
+        pic_ph = ph(slide, 14)
+        if pic_ph is not None:
+            pic_ph.insert_picture(img_path)
     return slide
 
 
@@ -272,6 +312,12 @@ def build():
     agenda_slide(prs)
 
     # ── Management Summary ───────────────────────────────────────────────────
+    highlight(prs,
+        "Management Summary",
+        "Governance · Sicherheit · Netzwerk\nals Code – reproduzierbar und auditfähig.",
+        "Bechtle setzt auf den Microsoft ALZ Bicep Accelerator: "
+        "149 Policies · 12 MGs · 18 Deploy-Stufen · OIDC · ~€1.050/Monat"
+    )
     divider(prs,
         "Management Summary",
         "Governance · Netzwerk · Sicherheit · Automatisierung – als IaC-Fundament",
@@ -360,50 +406,31 @@ def build():
         ("Subscription-Strategie: Single-Sub für Pilot → "
          "4 dedizierte Platform-Subs für Produktion", 0),
     ])
-    picture_slide(prs,
-        "Zielarchitektur: Azure Landing Zone – Hub-and-Spoke-Topologie",
+    diagram_slide(prs,
+        "Zielarchitektur",
+        "Hub-and-Spoke-Topologie",
         "alz-hub-spoke.png",
         [
-            ("Bechtle-Empfehlung (~€1.050/Mon.)",
-             "Connectivity Sub: Firewall Standard 1×\n"
-             "Bastion 1×  ·  VPN GW 1×  ·  DNS Resolver 1×\n"
-             "Region: Germany West Central (GWC)"),
-            ("Erweiterung: Geo-Redundanz (~€1.800)",
-             "Zweiter Hub (North Europe) per\n"
-             "additivem Parameter-Update –\n"
-             "kein Rebuild erforderlich"),
-            ("Landing Zones (Workload-Subs)",
-             "alz-corp: interne Workloads (kein Public EP)\n"
-             "alz-online: internetseitige Dienste\n"
-             "alz-sandbox: Experimente / PoC"),
-            ("On-Prem-Anbindung",
-             "VPN Gateway: aktiv (Empfehlung)\n"
-             "ExpressRoute: deferred – aktivieren\n"
-             "bei ER-Leitungsbestellung\n"
-             "CrowdStrike-SIEM: Event-Hub-Export"),
-        ]
+            "Bechtle-Empfehlung: GWC · Firewall Standard · ~€1.050/Mon.",
+            "Connectivity Sub: Firewall · Bastion · VPN GW · DNS Resolver",
+            "Landing Zones: alz-corp · alz-online · alz-sandbox",
+            "On-Prem: VPN aktiv · ExpressRoute deferred",
+            "SIEM: CrowdStrike via Event-Hub-Export",
+        ],
+        big=True
     )
-    picture_slide(prs,
-        "Zielarchitektur: Management Group Hierarchie",
+    diagram_slide(prs,
+        "Zielarchitektur",
+        "Management Group Hierarchie (12 MGs)",
         "alz-mg-hierarchy.png",
         [
-            ("12 Management Groups",
-             "Vollständig per ALZ Bicep Accelerator\n"
-             "deployt – kein manueller Aufwand"),
-            ("Policy-Vererbung",
-             "149 Definitionen · 42 Initiativen\n"
-             "123 Assignments – alz-Root vererbt\n"
-             "an alle Child-MGs automatisch"),
-            ("DoNotEnforce-Start",
-             "Alle Policies starten im Audit-Modus.\n"
-             "Bestehende Ressourcen werden\n"
-             "gemeldet, nicht blockiert."),
-            ("Schutz bestehender Ressourcen",
-             "What-If vor jedem Subscription-Move.\n"
-             "Exemptions für Legacy-Ressourcen.\n"
-             "Enforcement erst nach Audit-Phase\n"
-             "(Empfehlung: 4–8 Wochen)."),
-        ]
+            "Vollständig per ALZ Bicep Accelerator deployt",
+            "149 Definitionen · 42 Initiativen · 123 Assignments",
+            "DoNotEnforce: Audit-Modus schützt Bestandsressourcen",
+            "What-If vor jedem Subscription-Move",
+            "Exemptions für Legacy-Ressourcen möglich",
+        ],
+        big=False
     )
 
     # ── 4. Governance & Policies ──────────────────────────────────────────────
@@ -450,30 +477,39 @@ def build():
         ("DDoS Protection: deaktiviert – bei internet-facing Workloads aktivieren [Default: €2.500]", 0),
         ("Private DNS Zones + DNS Resolver: aktiv – unveraendert  ~€40/Monat", 0),
     ])
-    picture_slide(prs,
-        "Netzwerk-Architektur: Hub-and-Spoke – Connectivity Subscription im Detail",
+    diagram_slide(prs,
+        "Netzwerk-Architektur",
+        "Connectivity Subscription im Detail",
         "alz-hub-spoke.png",
         [
-            ("Azure Firewall Standard",
-             "Zentraler Egress-Kontrollpunkt\n"
-             "FQDN-Filterung · NAT · Threat Intel\n"
-             "Upgrade → Premium ohne Rebuild\n"
-             "~€700/Monat (1 Region)"),
-            ("Gateways & Zugriff",
-             "VPN GW VpnGw1AZ: ~€140/Mon.\n"
-             "Azure Bastion: sicheres RDP/SSH\n"
-             "ohne Public IP · ~€120/Mon.\n"
-             "ExpressRoute GW: deferred"),
-            ("DNS & Private Connectivity",
-             "DNS Private Resolver: ~€25/Mon.\n"
-             "Private DNS Zones: ~€15/Mon.\n"
-             "Key Vault für Zertifikate\n"
-             "Event Hub → CrowdStrike SIEM"),
-            ("Spoke-Schutz",
-             "Jede Workload-Sub = eigenes VNet\n"
-             "Peering zum Hub-VNet\n"
-             "UDR: gesamter Traffic über\n"
-             "Azure Firewall zwingend geleitet"),
+            "Azure Firewall Standard: FQDN · NAT · Threat Intel · ~€700/Mon.",
+            "VPN GW VpnGw1AZ: ~€140/Mon.  |  Bastion: RDP/SSH ohne Public IP · ~€120",
+            "Key Vault: Zertifikate für Monitoring-TLS",
+            "Event Hub → CrowdStrike SIEM (Log-Export)",
+            "UDR: aller Spoke-Traffic zwingend über Firewall",
+        ],
+        big=False
+    )
+    compare(prs,
+        "Netzwerk-Architektur",
+        "Microsoft-Default vs. Bechtle-Empfehlung",
+        "Microsoft-Default  ~€5.800/Mon.",
+        [
+            "Azure Firewall Premium 2× · ~€2.200",
+            "DDoS Network Protection · ~€2.500",
+            "ExpressRoute GW 2× · ~€560",
+            "VPN GW 2× · ~€280",
+            "Azure Bastion 2× · ~€240",
+            "2 Regionen: GWC + North Europe",
+        ],
+        "Bechtle-Empfehlung  ~€1.050/Mon.",
+        [
+            "Azure Firewall Standard 1× · ~€700",
+            "DDoS: deferred (bei Bedarf aktivieren)",
+            "ExpressRoute GW: deferred",
+            "VPN GW 1× · ~€140",
+            "Azure Bastion 1× · ~€120",
+            "1 Region: Germany West Central",
         ]
     )
 
@@ -565,6 +601,12 @@ def build():
     ])
 
     # ── 10. Kosten & Sizing ───────────────────────────────────────────────────
+    highlight(prs,
+        "Kosten und Kostensteuerung",
+        "~€1.050 / Monat",
+        "Bechtle-Empfehlung: voller Funktionsumfang, eine Region, ALZ-konform – "
+        "4× günstiger als Microsoft-Default (~€5.800)"
+    )
     divider(prs,
         "10  ·  Kosten und Kostensteuerung",
         "Bechtle-Empfehlung: ~€1.050/Monat – voller Funktionsumfang, eine Region"
