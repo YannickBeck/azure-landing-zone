@@ -789,38 +789,151 @@ doc.add_page_break()
 # ═══════════════════════════════════════════════════════════════════
 # 7. RESSOURCE-NAMING-KONVENTION
 # ═══════════════════════════════════════════════════════════════════
-doc.add_heading("7. Ressource-Naming-Konvention", level=1)
+doc.add_heading("7. Ressource-Naming-Konvention & Ressourcen-Inventar", level=1)
 add_body(doc,
     "Alle ALZ-Ressourcen folgen dem Microsoft Cloud Adoption Framework Naming Standard. "
-    "Präfix <Dienst>-alz-<Zweck>-<Region-Kürzel>. Region-Kürzel: gwe = Germany West Central, ne = North Europe."
+    "Grundmuster: <Dienst-Kürzel>-alz-<Umgebung>-<Zweck>-<Region-Kürzel>. "
+    "Region-Kürzel: gwe = Germany West Central, ne = North Europe."
+)
+
+doc.add_heading("7.1 Umgebungs-Kürzel", level=2)
+add_table(doc,
+    ["Kürzel", "Umgebung", "Verwendung", "Beispiel"],
+    [
+        ["(kein Kürzel)", "Produktion",        "Produktive Landing Zone",               "law-alz-gwe"],
+        ["poc",           "Proof of Concept",  "Demo- und Smoke-Run-Ressourcen im Tenant","law-alz-poc-gwe"],
+        ["dev",           "Development",       "Entwicklungsumgebung (zukünftig)",       "law-alz-dev-gwe"],
+        ["tst",           "Test/Staging",      "Testumgebung (zukünftig)",               "law-alz-tst-gwe"],
+    ],
+    col_widths=[1.1, 1.5, 2.6, 2.8]
+)
+add_section_note(doc,
+    "PoC-Ressourcen sind zusätzlich mit dem Tag 'Environment: PoC' gekennzeichnet und "
+    "damit im Azure Portal per Filter sofort von Produktionsressourcen (Environment: Production) unterscheidbar."
+)
+
+doc.add_heading("7.2 Naming-Muster nach Ressourcentyp", level=2)
+add_table(doc,
+    ["Ressourcentyp", "Muster (Produktion)", "Muster (PoC)"],
+    [
+        ["Management Group",          "alz[-sub-ebene]",                     "(identisch – umgebungsunabhängig)"],
+        ["Resource Group",            "rg-alz-<zweck>-<region>",             "rg-alz-poc-<zweck>-<region>"],
+        ["Log Analytics Workspace",   "law-alz-<region>",                    "law-alz-poc-<region>"],
+        ["Managed Identity",          "mi-alz-<region>",                     "mi-alz-poc-<region>"],
+        ["Data Collection Rule",      "dcr-<typ>-alz-<region>",              "dcr-<typ>-alz-poc-<region>"],
+        ["Data Collection Endpoint",  "dce-alz-<region>",                    "dce-alz-poc-<region>"],
+        ["Automation Account",        "aa-alz-<region>",                     "aa-alz-poc-<region>"],
+        ["Virtual Network (Hub)",     "vnet-alz-hub-<region>",               "vnet-alz-poc-<region>"],
+        ["Azure Firewall",            "afw-alz-<region>",                    "(nicht deployed in PoC)"],
+        ["Firewall Policy",           "afwp-alz-<region>",                   "(nicht deployed in PoC)"],
+        ["Azure Bastion",             "bas-alz-<region>",                    "(nicht deployed in PoC)"],
+        ["VPN Gateway",               "vpngw-alz-<region>",                  "(nicht deployed in PoC)"],
+        ["ExpressRoute Gateway",      "ergw-alz-<region>",                   "(nicht deployed in PoC)"],
+        ["DNS Private Resolver",      "dnspr-alz-<region>",                  "dnspr-alz-poc-<region>"],
+        ["Public IP",                 "pip-<dienst>-alz-<region>",           "pip-<dienst>-alz-poc-<region>"],
+        ["DDoS Protection Plan",      "ddos-alz",                            "(nicht deployed in PoC)"],
+        ["Recovery Services Vault",   "rsv-alz-<region>",                    "rsv-alz-poc-<region>"],
+        ["Key Vault",                 "kv-<workload>-<env>-<region>",        "kv-<workload>-poc-<region>"],
+        ["Storage Account",           "st<workload>prod<region>",            "st<workload>poc<region>"],
+        ["NSG",                       "nsg-<subnetz>-<workload>-<region>",   "nsg-<subnetz>-<workload>-poc-<region>"],
+        ["Route Table",               "rt-<zweck>-<workload>-<region>",      "rt-<zweck>-<workload>-poc-<region>"],
+        ["Virtual Network (Spoke)",   "vnet-<workload>-prod-<region>",       "vnet-<workload>-poc-<region>"],
+    ],
+    col_widths=[2.0, 2.5, 3.5]
+)
+
+doc.add_heading("7.3 Konkretes Ressourcen-Inventar – Produktion", level=2)
+add_body(doc,
+    "Vollständige Liste aller tatsächlich deployten Ressourcen mit exakten Namen "
+    "für die produktive Landing Zone (Germany West Central als primäre, North Europe als sekundäre Region).",
+    size=10
 )
 add_table(doc,
-    ["Ressourcentyp", "Muster", "Beispiel GWC"],
+    ["Ressource (exakter Name)", "Typ", "Region", "Resource Group / Scope"],
     [
-        ["Management Group",          "alz[-sub-ebene]",                    "alz-platform-connectivity"],
-        ["Resource Group",            "rg-alz-<zweck>-<region>",           "rg-alz-connectivity-gwe"],
-        ["Log Analytics Workspace",   "law-alz-<region>",                  "law-alz-gwe"],
-        ["Managed Identity",          "mi-alz-<region>",                   "mi-alz-gwe"],
-        ["Data Collection Rule",      "dcr-<typ>-alz-<region>",            "dcr-vminsights-alz-gwe"],
-        ["Data Collection Endpoint",  "dce-alz-<region>",                  "dce-alz-gwe"],
-        ["Automation Account",        "aa-alz-<region>",                   "aa-alz-gwe"],
-        ["Virtual Network (Hub)",     "vnet-alz-hub-<region>",             "vnet-alz-hub-gwe"],
-        ["Virtual Network (Spoke)",   "vnet-<workload>-<env>-<region>",    "vnet-sap-prod-gwe"],
-        ["Azure Firewall",            "afw-alz-<region>",                  "afw-alz-gwe"],
-        ["Firewall Policy",           "afwp-alz-<region>",                 "afwp-alz-gwe"],
-        ["Azure Bastion",             "bas-alz-<region>",                  "bas-alz-gwe"],
-        ["VPN Gateway",               "vpngw-alz-<region>",                "vpngw-alz-gwe"],
-        ["ExpressRoute Gateway",      "ergw-alz-<region>",                 "ergw-alz-gwe"],
-        ["DNS Private Resolver",      "dnspr-alz-<region>",                "dnspr-alz-gwe"],
-        ["Public IP",                 "pip-<dienst>-alz-<region>",         "pip-afw-alz-gwe"],
-        ["DDoS Protection Plan",      "ddos-alz",                          "ddos-alz"],
-        ["Recovery Services Vault",   "rsv-alz-<region>",                  "rsv-alz-gwe"],
-        ["Key Vault",                 "kv-<workload>-<env>-<region>",      "kv-sap-prod-gwe"],
-        ["Storage Account",           "st<workload><env><region>",         "stsapprodgwe (keine Bindestriche)"],
-        ["NSG",                       "nsg-<subnetz>-<workload>-<region>", "nsg-app-sap-prod-gwe"],
-        ["Route Table",               "rt-<zweck>-<workload>-<region>",    "rt-hub-spoke-gwe"],
+        # Management Groups
+        ["alz",                               "Management Group", "–",   "Tenant Root"],
+        ["alz-platform",                      "Management Group", "–",   "alz"],
+        ["alz-platform-connectivity",         "Management Group", "–",   "alz-platform"],
+        ["alz-platform-identity",             "Management Group", "–",   "alz-platform"],
+        ["alz-platform-management",           "Management Group", "–",   "alz-platform"],
+        ["alz-platform-security",             "Management Group", "–",   "alz-platform"],
+        ["alz-landingzones",                  "Management Group", "–",   "alz"],
+        ["alz-landingzones-corp",             "Management Group", "–",   "alz-landingzones"],
+        ["alz-landingzones-online",           "Management Group", "–",   "alz-landingzones"],
+        ["alz-landingzones-local",            "Management Group", "–",   "alz-landingzones"],
+        ["alz-sandbox",                       "Management Group", "–",   "alz"],
+        ["alz-decommissioned",                "Management Group", "–",   "alz"],
+        # Resource Groups
+        ["rg-alz-logging-germanywestcentral", "Resource Group",   "GWC", "Management Sub"],
+        ["rg-alz-logging-northeurope",        "Resource Group",   "NE",  "Management Sub"],
+        ["rg-alz-conn-germanywestcentral",    "Resource Group",   "GWC", "Connectivity Sub"],
+        ["rg-alz-conn-northeurope",           "Resource Group",   "NE",  "Connectivity Sub"],
+        ["rg-alz-dns-germanywestcentral",     "Resource Group",   "GWC", "Connectivity Sub"],
+        ["rg-alz-dns-northeurope",            "Resource Group",   "NE",  "Connectivity Sub"],
+        # Logging
+        ["law-alz-germanywestcentral",        "Log Analytics Workspace", "GWC", "rg-alz-logging-germanywestcentral"],
+        ["law-alz-northeurope",               "Log Analytics Workspace", "NE",  "rg-alz-logging-northeurope"],
+        ["mi-alz-germanywestcentral",         "Managed Identity",        "GWC", "rg-alz-logging-germanywestcentral"],
+        ["mi-alz-northeurope",                "Managed Identity",        "NE",  "rg-alz-logging-northeurope"],
+        ["dcr-vmi-alz-germanywestcentral",    "Data Collection Rule",    "GWC", "rg-alz-logging-germanywestcentral"],
+        ["dcr-ct-alz-germanywestcentral",     "Data Collection Rule",    "GWC", "rg-alz-logging-germanywestcentral"],
+        ["dcr-mdfcsql-alz-germanywestcentral","Data Collection Rule",    "GWC", "rg-alz-logging-germanywestcentral"],
+        # Hub Networking GWC
+        ["vnet-alz-germanywestcentral",       "Virtual Network (Hub)",   "GWC", "rg-alz-conn-germanywestcentral"],
+        ["afw-alz-germanywestcentral",        "Azure Firewall",          "GWC", "rg-alz-conn-germanywestcentral"],
+        ["afwp-alz-germanywestcentral",       "Firewall Policy",         "GWC", "rg-alz-conn-germanywestcentral"],
+        ["bas-alz-germanywestcentral",        "Azure Bastion",           "GWC", "rg-alz-conn-germanywestcentral"],
+        ["vpngw-alz-germanywestcentral",      "VPN Gateway",             "GWC", "rg-alz-conn-germanywestcentral"],
+        ["dnspr-alz-germanywestcentral",      "DNS Private Resolver",    "GWC", "rg-alz-conn-germanywestcentral"],
+        ["pip-afw-alz-germanywestcentral",    "Public IP (Firewall)",    "GWC", "rg-alz-conn-germanywestcentral"],
+        ["pip-afw-mgmt-alz-germanywestcentral","Public IP (FW Mgmt)",   "GWC", "rg-alz-conn-germanywestcentral"],
+        ["pip-bas-alz-germanywestcentral",    "Public IP (Bastion)",     "GWC", "rg-alz-conn-germanywestcentral"],
+        ["pip-vpngw-alz-germanywestcentral",  "Public IP (VPN GW)",      "GWC", "rg-alz-conn-germanywestcentral"],
+        # Hub Networking NE
+        ["vnet-alz-northeurope",              "Virtual Network (Hub)",   "NE",  "rg-alz-conn-northeurope"],
+        ["afw-alz-northeurope",               "Azure Firewall",          "NE",  "rg-alz-conn-northeurope"],
+        ["afwp-alz-northeurope",              "Firewall Policy",         "NE",  "rg-alz-conn-northeurope"],
+        ["bas-alz-northeurope",               "Azure Bastion",           "NE",  "rg-alz-conn-northeurope"],
+        # DNS
+        ["privatelink.blob.core.windows.net (+ 58 weitere Zonen)", "Private DNS Zones (59)", "GWC", "rg-alz-dns-germanywestcentral"],
     ],
-    col_widths=[2.1, 2.8, 3.1]
+    col_widths=[3.0, 1.8, 0.6, 2.6]
+)
+
+doc.add_heading("7.4 Konkretes Ressourcen-Inventar – PoC / Demo", level=2)
+add_body(doc,
+    "Vollständige Liste aller tatsächlich deployten Ressourcen im PoC-Setup "
+    "(smokerun/ – Single Subscription, nur Germany West Central, ohne Firewall/Bastion/Gateway).",
+    size=10
+)
+add_table(doc,
+    ["Ressource (exakter Name)", "Typ", "Resource Group"],
+    [
+        # Management Groups – identisch
+        ["alz (+ 11 Kind-MGs)",               "Management Groups (12)",           "Tenant Root – identisch zu Prod"],
+        # Resource Groups
+        ["rg-alz-poc-logging-gwe",            "Resource Group",                   "PoC Subscription"],
+        ["rg-alz-poc-conn-germanywestcentral", "Resource Group",                   "PoC Subscription"],
+        ["rg-alz-poc-dns-germanywestcentral",  "Resource Group",                   "PoC Subscription"],
+        # Logging
+        ["law-alz-poc-gwe",                   "Log Analytics Workspace (30 Tage)", "rg-alz-poc-logging-gwe"],
+        ["mi-alz-poc-gwe",                    "Managed Identity",                  "rg-alz-poc-logging-gwe"],
+        ["dcr-vmi-alz-poc-gwe",               "Data Collection Rule (VM Insights)","rg-alz-poc-logging-gwe"],
+        ["dcr-ct-alz-poc-gwe",                "Data Collection Rule (Change Tracking)","rg-alz-poc-logging-gwe"],
+        ["dcr-mdfcsql-alz-poc-gwe",           "Data Collection Rule (Defender SQL)","rg-alz-poc-logging-gwe"],
+        # Networking
+        ["vnet-alz-poc-gwe",                  "Virtual Network (Hub, 10.0.0.0/24)","rg-alz-poc-conn-germanywestcentral"],
+        ["privatelink.blob.core.windows.net (+ weitere)", "Private DNS Zones",    "rg-alz-poc-dns-germanywestcentral"],
+        # Nicht deployed in PoC
+        ["afw-alz-poc-gwe",                   "Azure Firewall → NICHT deployed",  "–"],
+        ["bas-alz-poc-gwe",                   "Azure Bastion  → NICHT deployed",  "–"],
+        ["vpngw-alz-poc-gwe",                 "VPN Gateway    → NICHT deployed",  "–"],
+    ],
+    col_widths=[3.2, 2.5, 2.3]
+)
+add_section_note(doc,
+    "Alle PoC-Ressourcen tragen das Tag 'Environment: PoC'. Teardown per: bash smokerun/teardown.sh"
 )
 
 # ═══════════════════════════════════════════════════════════════════
