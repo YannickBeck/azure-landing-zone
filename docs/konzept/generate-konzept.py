@@ -236,7 +236,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("1. Ausgangslage und Zielsetzung", level=1)
 
-    doc.add_heading("Ausgangslage", level=2)
+    doc.add_heading("1.1 Ausgangslage", level=2)
     add_body(doc,
         "Der Kunde steht am Beginn seiner Azure-Reise: eine bestehende Subscription, "
         "noch kein etabliertes Cloud-Governance-Modell und kein vorheriger Kickoff. "
@@ -249,7 +249,7 @@ def build():
         "nachträgliche Governance-Nachrüstung zu akkumulieren."
     )
 
-    doc.add_heading("Zielbild", level=2)
+    doc.add_heading("1.2 Zielbild", level=2)
     add_body(doc,
         "Das Zielbild ist eine standardisierte, mandantenweite Azure-Grundstruktur "
         "als stabiles Fundament für alle künftigen Workloads:"
@@ -260,7 +260,7 @@ def build():
     add_bullet(doc, "Hub-and-Spoke-Netzwerk für sichere, private Konnektivität zwischen Workloads und On-Premises")
     add_bullet(doc, "Reproduzierbares Infrastructure-as-Code-Modell für nachvollziehbare, audit-fähige Änderungen")
 
-    doc.add_heading("Abgrenzung", level=2)
+    doc.add_heading("1.3 Abgrenzung", level=2)
     add_body(doc,
         "Die Azure Landing Zone ist das Fundament – nicht die Anwendung. Migration "
         "bestehender Workloads, Anwendungsentwicklung und laufender Applikationsbetrieb "
@@ -268,7 +268,7 @@ def build():
         "betriebsbereiten Landing Zone."
     )
 
-    doc.add_heading("Erfolgskriterien", level=2)
+    doc.add_heading("1.4 Erfolgskriterien", level=2)
     add_table(doc,
         ["Erfolgskriterium", "Messgröße / Nachweis"],
         [
@@ -291,7 +291,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("2. Methodik und Vorgehen", level=1)
 
-    doc.add_heading("Microsoft ALZ Bicep Accelerator", level=2)
+    doc.add_heading("2.1 Microsoft ALZ Bicep Accelerator", level=2)
     add_body(doc,
         "Grundlage ist der offizielle Microsoft ALZ Bicep Accelerator. Dieser Ansatz "
         "statt eines Eigenbaus bietet folgende Vorteile:"
@@ -317,14 +317,14 @@ def build():
         "AVM"
     )
 
-    doc.add_heading("Infrastructure as Code und Pipelines", level=2)
+    doc.add_heading("2.2 Infrastructure as Code und Pipelines", level=2)
     add_bullet(doc, "Deklarativ: Templates beschreiben den Zielzustand – Azure stellt sicher, dass er erreicht wird")
     add_bullet(doc, "Versioniert: jede Änderung nachvollziehbar, rückrollbar und audit-fähig (Git-History)")
     add_bullet(doc, "Passwortlos: OIDC Federated Identity – keine Passwörter oder Zertifikate in Pipelines")
     add_bullet(doc, "What-If vor Apply: Pipeline zeigt geplante Änderungen zur Freigabe, bevor etwas ausgeführt wird")
     add_bullet(doc, "Approval-Gate: explizite Freigabe erforderlich, bevor die Pipeline Änderungen am Tenant vornimmt")
 
-    doc.add_heading("18 geordnete Deployment-Stufen", level=2)
+    doc.add_heading("2.3 18 geordnete Deployment-Stufen", level=2)
     add_table(doc,
         ["#", "Stufe", "Scope", "Inhalt"],
         [
@@ -350,7 +350,7 @@ def build():
         col_widths=[0.3, 1.9, 0.6, 4.2]
     )
 
-    doc.add_heading("Qualitätssicherung", level=2)
+    doc.add_heading("2.4 Qualitätssicherung", level=2)
     add_body(doc,
         "Alle 20 Bicep-Templates werden offline gegen die MCR gebaut und validiert – "
         "ohne Azure-Login. Die statische Validierung (bicep build) läuft in der "
@@ -499,7 +499,7 @@ def build():
         col_widths=[2.4, 0.8, 3.8]
     )
 
-    doc.add_heading("Assignment-Verteilung je Management-Group-Ebene", level=2)
+    doc.add_heading("4.1 Assignment-Verteilung je Management-Group-Ebene", level=2)
     add_table(doc,
         ["Management Group", "Assignments", "Repräsentative Beispiele"],
         [
@@ -520,7 +520,7 @@ def build():
         col_widths=[2.3, 0.9, 3.8]
     )
 
-    doc.add_heading("DoNotEnforce-Modus für sanftes Onboarding", level=2)
+    doc.add_heading("4.2 DoNotEnforce-Modus für sanftes Onboarding", level=2)
     add_body(doc,
         "Viele Assignments – insbesondere die Enforce-Guardrails-*-Initiativen – "
         "sind im Auslieferungszustand auf DoNotEnforce gesetzt. Policies werden "
@@ -531,7 +531,7 @@ def build():
     add_bullet(doc, "Phase 2 – Selektives Enforcing: Initiativen je Workload-Typ und Compliance-Anforderung auf »Enabled« schalten")
     add_bullet(doc, "Phase 3 – Vollständiges Enforcement: alle relevanten Guardrails aktiv nach erfolgreicher Remediation")
 
-    doc.add_heading("Was die Policies konkret bewirken", level=2)
+    doc.add_heading("4.3 Was die Policies konkret bewirken", level=2)
     add_table(doc,
         ["Policy-Typ", "Beispiele", "Wirkung"],
         [
@@ -746,7 +746,7 @@ def build():
         "(Logging, Monitoring, Defender for Cloud) und automatische Remediation."
     )
 
-    doc.add_heading("Microsoft Defender for Cloud", level=2)
+    doc.add_heading("6.1 Microsoft Defender for Cloud", level=2)
     add_body(doc,
         "Microsoft Defender for Cloud wird nicht manuell konfiguriert, sondern über "
         "Policy-Assignments auf alz-Root-Ebene automatisch aktiviert (DeployIfNotExists). "
@@ -767,7 +767,7 @@ def build():
         col_widths=[2.4, 2.8, 1.8]
     )
 
-    doc.add_heading("Zentrales Logging als Sicherheits-Backbone", level=2)
+    doc.add_heading("6.2 Zentrales Logging als Sicherheits-Backbone", level=2)
     add_body(doc,
         "Der Log Analytics Workspace (law-alz-<region>, 365 Tage Retention) ist das "
         "zentrale Sicherheits-Repository. Policy-Assignments speisen automatisch ein:"
@@ -777,7 +777,7 @@ def build():
     add_bullet(doc, "VM Insights, Change Tracking und Defender-for-SQL-Daten (über Data Collection Rules)")
     add_bullet(doc, "Service Health Alerts (Deploy-SvcHealth-BuiltIn)")
 
-    doc.add_heading("Optional: Microsoft Sentinel (Roadmap)", level=2)
+    doc.add_heading("6.3 Optional: Microsoft Sentinel (Roadmap)", level=2)
     add_bullet(doc, "Zu prüfen: SIEM-Anforderungen, Compliance-Verpflichtungen, Security-Operations-Kapazitäten")
     add_bullet(doc, "Mögliche Folgestufe: Sentinel-Onboarding mit Data Connectors (Azure AD, Defender for Cloud, Office 365) und Analyseregeln")
     add_bullet(doc, "Abgrenzung: Sentinel-Konfiguration, Playbooks und Incident-Handling sind nicht Teil der Landing Zone")
@@ -819,7 +819,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("8. Identity und RBAC", level=1)
 
-    doc.add_heading("5 Custom RBAC-Rollen", level=2)
+    doc.add_heading("8.1 5 Custom RBAC-Rollen", level=2)
     add_table(doc,
         ["Rolle", "Beschreibung", "Typische Zuweisung"],
         [
@@ -832,7 +832,7 @@ def build():
         col_widths=[2.2, 3.0, 1.8]
     )
 
-    doc.add_heading("RBAC-Zuweisungsmodell", level=2)
+    doc.add_heading("8.2 RBAC-Zuweisungsmodell", level=2)
     add_body(doc,
         "RBAC-Zuweisungen werden als Entra-ID-Gruppen-Object-IDs in den Bicep-Parameter-"
         "Dateien gepflegt und pro MG zugewiesen. Ein leeres Array ist ein No-Op – "
@@ -840,7 +840,7 @@ def build():
         "Kickoff durch den Kunden befüllt."
     )
 
-    doc.add_heading("Identity-Domäne (Roadmap)", level=2)
+    doc.add_heading("8.3 Identity-Domäne (Roadmap)", level=2)
     add_bullet(doc, "Zu prüfen: Entra-ID-Struktur, PIM-Anforderungen, Conditional Access Policies, hybride Identitäten")
     add_bullet(doc, "Mögliche Folgestufe: Identity-Baseline mit Entra ID Diagnostik, PIM-Konfiguration und Conditional Access")
     add_bullet(doc, "Abgrenzung: Entra ID Tenant-Konfiguration, MFA-Rollout und Identity-Governance sind nicht Bestandteil der Landing Zone")
@@ -851,7 +851,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("9. Automatisierung, CI/CD und Betrieb", level=1)
 
-    doc.add_heading("Bootstrap – Phase 0", level=2)
+    doc.add_heading("9.1 Bootstrap – Phase 0", level=2)
     add_body(doc,
         "Bevor die eigentliche Landing Zone deployed wird, richtet der Accelerator "
         "in Phase 0 alle notwendigen Infrastrukturen für Pipelines und Identitäten ein. "
@@ -877,7 +877,7 @@ def build():
         col_widths=[1.8, 5.2]
     )
 
-    doc.add_heading("Pipeline-Workflow", level=2)
+    doc.add_heading("9.2 Pipeline-Workflow", level=2)
     add_table(doc,
         ["Schritt", "Beschreibung", "Azure-Wirkung"],
         [
@@ -890,7 +890,7 @@ def build():
         col_widths=[1.3, 3.2, 2.5]
     )
 
-    doc.add_heading("GitOps-Betriebsmodell", level=2)
+    doc.add_heading("9.3 GitOps-Betriebsmodell", level=2)
     add_bullet(doc, "Nachvollziehbarkeit: jede Änderung mit Autor, Timestamp und Begründung im Git-Log")
     add_bullet(doc, "Rückrollbarkeit: jede Änderung kann durch neuen Commit rückgängig gemacht werden")
     add_bullet(doc, "Audit-Fähigkeit: Git-History + Azure Activity Log = vollständiges Änderungsprotokoll")
@@ -911,7 +911,7 @@ def build():
         "Microsoft-Standard (~€5.800/Monat) erweiterbar ist."
     )
 
-    doc.add_heading("Kostenvergleich: Varianten im Überblick", level=2)
+    doc.add_heading("10.1 Kostenvergleich: Varianten im Überblick", level=2)
     add_table(doc,
         ["Dienst / Komponente", "Microsoft-Default", "Bechtle-Empfehlung (~€1.050)", "Pilot (€0)"],
         [
@@ -931,7 +931,7 @@ def build():
         col_widths=[2.1, 1.6, 2.0, 1.3]
     )
 
-    doc.add_heading("Bechtle-Empfehlung: ~€1.050/Monat", level=2)
+    doc.add_heading("10.2 Bechtle-Empfehlung: ~€1.050/Monat", level=2)
     add_body(doc,
         "Die Bechtle-Konfiguration stellt alle produktionsrelevanten Netzwerk- und "
         "Sicherheitsdienste in der Primärregion (Germany West Central) bereit. "
@@ -958,7 +958,7 @@ def build():
         col_widths=[2.6, 0.8, 3.6]
     )
 
-    doc.add_heading("Gestufter Ausbau", level=2)
+    doc.add_heading("10.3 Gestufter Ausbau", level=2)
     add_table(doc,
         ["Stufe", "Konfiguration", "Kosten/Monat", "Ausloser"],
         [
@@ -997,7 +997,7 @@ def build():
         "und ohne Neukonfiguration der Firewall-Regeln."
     )
 
-    doc.add_heading("Konfigurationsvergleich: Vor- und Nachteile", level=2)
+    doc.add_heading("10.4 Konfigurationsvergleich: Vor- und Nachteile", level=2)
     add_body(doc,
         "Die folgende Tabelle bewertet jede Ausbaustufe anhand von Vorteilen, Nachteilen "
         "und typischen Einsatzszenarien – als Entscheidungshilfe für das initiale Sizing."
@@ -1039,7 +1039,7 @@ def build():
         col_widths=[1.5, 0.8, 2.3, 2.3, 1.7]
     )
 
-    doc.add_heading("Bechtle-Varianten: Drei Einsparstufen im Vergleich", level=2)
+    doc.add_heading("10.5 Bechtle-Varianten: Drei Einsparstufen im Vergleich", level=2)
     add_body(doc,
         "Innerhalb der Bechtle-Empfehlung gibt es drei konkrete Einsparstufen. "
         "Option A ist die aktuelle Baseline. Option B ist vollständig ALZ-konform und "
@@ -1140,7 +1140,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("12. Risiken, offene Punkte und Entscheidungsbedarf", level=1)
 
-    doc.add_heading("Risikomatrix", level=2)
+    doc.add_heading("12.1 Risikomatrix", level=2)
     add_table(doc,
         ["Risiko", "Auswirkung", "WSK", "Maßnahme"],
         [
@@ -1166,7 +1166,7 @@ def build():
         col_widths=[2.0, 1.7, 0.6, 2.7]
     )
 
-    doc.add_heading("Offene Punkte", level=2)
+    doc.add_heading("12.2 Offene Punkte", level=2)
     add_table(doc,
         ["ID", "Offener Punkt", "Aufwand", "Priorität"],
         [
@@ -1179,7 +1179,7 @@ def build():
         col_widths=[0.4, 3.2, 0.8, 0.8]
     )
 
-    doc.add_heading("Entscheidungsbedarf Kunde", level=2)
+    doc.add_heading("12.3 Entscheidungsbedarf Kunde", level=2)
     add_table(doc,
         ["Entscheidung", "Optionen", "Bechtle-Empfehlung"],
         [
@@ -1207,32 +1207,32 @@ def build():
         "und mögliche Folgebausteine eingeordnet."
     )
 
-    doc.add_heading("Entra ID und Identity", level=2)
+    doc.add_heading("13.1 Entra ID und Identity", level=2)
     add_bullet(doc, "Zu prüfen: Entra-ID-Tenant-Struktur, vorhandene Gruppen und Rollen, MFA-Status, Conditional Access Policies, PIM-Nutzung")
     add_bullet(doc, "Mögliche Folgestufe: Identity-Baseline (Entra Diagnostik → LAW, Conditional Access Grundkonfiguration, PIM für privilegierte Rollen, hybride Identitäten)")
     add_bullet(doc, "Abgrenzung: Entra-ID-Konfiguration und MFA-Rollout sind nicht Bestandteil der Landing Zone; die MG alz-platform-identity und die Identity-Subscription sind vorgesehen")
 
-    doc.add_heading("On-Premises-Anbindung", level=2)
+    doc.add_heading("13.2 On-Premises-Anbindung", level=2)
     add_bullet(doc, "Zu prüfen: Bandbreitenanforderungen, Latenz-SLA, bestehende Leitungsinfrastruktur, IP-Adressplan und Überlappungsrisiken mit Hub-VNets (10.0.0.0/22, 10.1.0.0/22)")
     add_bullet(doc, "Mögliche Folgestufe: VPN-Gateway-Konfiguration (VpnGw1AZ, active-active BGP, ASN 65515 – bereits deployt) oder ExpressRoute-Gateway mit Provider-Anbindung")
     add_bullet(doc, "Abgrenzung: Leitungsbestellung, Router-Konfiguration On-Premises und BGP-Peering mit Provider sind außerhalb des Landing-Zone-Scopes")
 
-    doc.add_heading("Backup und Disaster Recovery", level=2)
+    doc.add_heading("13.3 Backup und Disaster Recovery", level=2)
     add_bullet(doc, "Zu prüfen: RPO/RTO-Anforderungen je Workload, vorhandene Backup-Lösungen, Geo-Redundanz-Bedarf")
     add_bullet(doc, "Mögliche Folgestufe: Recovery Services Vault je Landing Zone, Azure Backup Policies, Azure Site Recovery für kritische VMs")
     add_bullet(doc, "Abgrenzung: Die Policy Deploy-VM-Backup sichert VMs ohne Backup-Tag automatisch; Recovery-Vault-Konfiguration und DR-Tests sind eigene Projektschritte")
 
-    doc.add_heading("Kostenmanagement", level=2)
+    doc.add_heading("13.4 Kostenmanagement", level=2)
     add_bullet(doc, "Zu prüfen: Budget-Limits je Subscription / Abteilung, Tagging-Strategie für Kostenzuordnung, Cost Alert-Schwellwerte")
     add_bullet(doc, "Mögliche Folgestufe: Azure Cost Management Dashboards, Budget-Alerts je MG/Sub, Tagging-Enforcement via Policy (Audit-Tags-Mandatory-Rg ist im Policy-Set enthalten)")
     add_bullet(doc, "Abgrenzung: Chargeback-Modelle, FinOps-Prozesse und Lizenz-Optimierung sind nicht Teil der Landing Zone")
 
-    doc.add_heading("Compliance und Regulatorik", level=2)
+    doc.add_heading("13.5 Compliance und Regulatorik", level=2)
     add_bullet(doc, "Zu prüfen: branchenspezifische Anforderungen (BSI, ISO 27001, DSGVO), Datenresidenz-Vorgaben, regulatorische Berichtspflichten")
     add_bullet(doc, "Mögliche Folgestufe: Compliance-spezifische Policy-Initiativen, Defender for Cloud Regulatory Compliance Dashboard, Microsoft Purview")
     add_bullet(doc, "Abgrenzung: rechtliche Compliance-Bewertung und Zertifizierungsberatung sind außerhalb des technischen Landing-Zone-Scopes")
 
-    doc.add_heading("Workload-Migration", level=2)
+    doc.add_heading("13.6 Workload-Migration", level=2)
     add_bullet(doc, "Zu prüfen: Inventar bestehender Workloads, Abhängigkeiten, Migrations-Reihenfolge, Downtime-Toleranz")
     add_bullet(doc, "Mögliche Folgestufe: Azure Migrate Assessment, Rehosting (Lift & Shift), Refactoring oder Rebuild je Workload")
     add_bullet(doc, "Abgrenzung: Workload-Migration ist ein eigenständiges Folgeprojekt; die Landing Zone ist das Ziel, nicht der Migrations-Prozess")
@@ -1243,7 +1243,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("14. Nächste Schritte und Empfehlung", level=1)
 
-    doc.add_heading("Sofort-Maßnahmen (ohne Azure-Kosten)", level=2)
+    doc.add_heading("14.1 Sofort-Maßnahmen (ohne Azure-Kosten)", level=2)
     add_table(doc,
         ["#", "Maßnahme", "Verantwortlich", "Aufwand"],
         [
@@ -1257,7 +1257,7 @@ def build():
         col_widths=[0.3, 3.5, 1.2, 0.8]
     )
 
-    doc.add_heading("Empfohlener Pilot-Pfad", level=2)
+    doc.add_heading("14.2 Empfohlener Pilot-Pfad", level=2)
     add_bullet(doc, "Schritt 1: Subscription-ID und GitHub PAT in config/inputs-github.yaml eintragen")
     add_bullet(doc, "Schritt 2: Deploy-Accelerator lokal ausführen – Bootstrap erstellt Repo, OIDC-Identität und Pipelines")
     add_bullet(doc, "Schritt 3: Pipeline mit What-If ausführen und Review: welche Ressourcen werden erstellt?")
@@ -1268,7 +1268,7 @@ def build():
         "Das vollständige Runbook mit allen Details steht in docs/ACCELERATOR-BOOTSTRAP.md."
     )
 
-    doc.add_heading("Bechtle-Begleitung", level=2)
+    doc.add_heading("14.3 Bechtle-Begleitung", level=2)
     add_body(doc,
         "Bechtle begleitet den Kunden über alle Phasen: "
         "von der Kickoff-Workshop-Vorbereitung über den Bootstrap bis zum ersten "
