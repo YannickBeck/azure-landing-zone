@@ -156,26 +156,104 @@ def content(prs, breadcrumb, title, bullets, size=13):
     return slide
 
 
-def picture_slide(prs, title, filename, caption=None):
-    """Folie mit Titel und Vollbild-Grafik (Layout 13 – Nur Titel)."""
-    slide = prs.slides.add_slide(sl(prs, 13))
-    set_text(slide, 0, title, size=18)
+def picture_slide(prs, title, filename, callouts):
+    """
+    Folie: Original-Diagramm links (66 %), Kommentarboxen rechts (30 %).
+    callouts: Liste von (header, text)-Tupeln – max. 4 sinnvoll.
+    Das Diagramm bleibt vollständig unverändert; alle Bechtle-Infos
+    stehen als farbige Boxen in der rechten Spalte.
+    """
+    from pptx.dml.color import RGBColor
+    from pptx.util import Pt
+    from pptx.oxml.ns import qn as _qn
+    from lxml import etree
+
+    G_DARK  = RGBColor(0x07, 0x50, 0x33)   # Bechtle Dunkelgrün
+    G_MID   = RGBColor(0x23, 0xA9, 0x6A)   # Bechtle Grün
+    G_BG    = RGBColor(0xF2, 0xF9, 0xF5)   # sehr helles Grün (Box-Hintergrund)
+    GREY    = RGBColor(0x59, 0x59, 0x59)
+
+    slide = prs.slides.add_slide(sl(prs, 39))  # Leer/Blank
+
+    # ── Titelleiste oben ──────────────────────────────────────────────────────
+    tb = slide.shapes.add_textbox(Inches(0.15), Inches(0.08), Inches(13.0), Inches(0.48))
+    tf = tb.text_frame
+    r = tf.paragraphs[0].add_run()
+    r.text = title
+    r.font.size = Pt(15)
+    r.font.bold = True
+    r.font.color.rgb = G_DARK
+
+    # Trennlinie unter dem Titel (dünnes grünes Rechteck)
+    line = slide.shapes.add_shape(1, Inches(0.15), Inches(0.60), Inches(13.0), Inches(0.025))
+    line.fill.solid()
+    line.fill.fore_color.rgb = G_MID
+    line.line.fill.background()
+
+    # ── Originaldiagramm links ────────────────────────────────────────────────
     img_path = os.path.join(IMAGES, filename)
     if os.path.exists(img_path):
         slide.shapes.add_picture(
             img_path,
-            left=Inches(0.3),
-            top=Inches(1.35),
-            width=Inches(12.7)
+            left=Inches(0.15),
+            top=Inches(0.68),
+            width=Inches(8.75)   # lässt rechts 4,35" für Kommentarboxen
         )
-    if caption:
-        from pptx.util import Pt as _Pt
-        from pptx.dml.color import RGBColor as _RGB
-        txBox = slide.shapes.add_textbox(Inches(0.3), Inches(7.0), Inches(12.7), Inches(0.4))
-        tf = txBox.text_frame
-        tf.text = caption
-        tf.paragraphs[0].runs[0].font.size = _Pt(8)
-        tf.paragraphs[0].runs[0].font.color.rgb = _RGB(0x59, 0x59, 0x59)
+
+    # Quellenangabe links unten
+    src_tb = slide.shapes.add_textbox(Inches(0.15), Inches(7.25), Inches(8.75), Inches(0.22))
+    src_tf = src_tb.text_frame
+    src_r = src_tf.paragraphs[0].add_run()
+    src_r.text = "Quelle: Microsoft Cloud Adoption Framework · learn.microsoft.com (unverändert)"
+    src_r.font.size = Pt(7)
+    src_r.font.color.rgb = GREY
+
+    # ── Kommentarboxen rechts ─────────────────────────────────────────────────
+    BOX_LEFT  = Inches(9.15)
+    BOX_W     = Inches(4.00)
+    AREA_TOP  = Inches(0.68)
+    AREA_H    = Inches(6.60)
+    n = len(callouts)
+    box_h = AREA_H / n - Inches(0.08)   # kleiner Abstand zwischen Boxen
+
+    for i, (header, body) in enumerate(callouts):
+        bx_top = AREA_TOP + i * (AREA_H / n)
+
+        # Box-Hintergrund
+        box = slide.shapes.add_shape(1, BOX_LEFT, bx_top, BOX_W, box_h)
+        box.fill.solid()
+        box.fill.fore_color.rgb = G_BG
+        box.line.color.rgb = G_DARK
+        box.line.width = Pt(1.25)
+
+        # Grüner Akzentstreifen links an der Box
+        accent = slide.shapes.add_shape(
+            1, BOX_LEFT, bx_top, Inches(0.07), box_h)
+        accent.fill.solid()
+        accent.fill.fore_color.rgb = G_DARK
+        accent.line.fill.background()
+
+        # Text in der Box
+        txt_box = slide.shapes.add_textbox(
+            BOX_LEFT + Inches(0.12), bx_top + Inches(0.07),
+            BOX_W - Inches(0.18), box_h - Inches(0.10))
+        tf2 = txt_box.text_frame
+        tf2.word_wrap = True
+
+        p_hdr = tf2.paragraphs[0]
+        r_hdr = p_hdr.add_run()
+        r_hdr.text = header
+        r_hdr.font.bold = True
+        r_hdr.font.size = Pt(9)
+        r_hdr.font.color.rgb = G_DARK
+
+        for line_txt in body.split("\n"):
+            p_b = tf2.add_paragraph()
+            r_b = p_b.add_run()
+            r_b.text = line_txt
+            r_b.font.size = Pt(8)
+            r_b.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
+
     return slide
 
 
@@ -283,14 +361,49 @@ def build():
          "4 dedizierte Platform-Subs für Produktion", 0),
     ])
     picture_slide(prs,
-        "Zielarchitektur: Azure Landing Zone – Hub-and-Spoke",
+        "Zielarchitektur: Azure Landing Zone – Hub-and-Spoke-Topologie",
         "alz-hub-spoke.png",
-        "Quelle: Microsoft Cloud Adoption Framework · learn.microsoft.com"
+        [
+            ("Bechtle-Empfehlung (~€1.050/Mon.)",
+             "Connectivity Sub: Firewall Standard 1×\n"
+             "Bastion 1×  ·  VPN GW 1×  ·  DNS Resolver 1×\n"
+             "Region: Germany West Central (GWC)"),
+            ("Erweiterung: Geo-Redundanz (~€1.800)",
+             "Zweiter Hub (North Europe) per\n"
+             "additivem Parameter-Update –\n"
+             "kein Rebuild erforderlich"),
+            ("Landing Zones (Workload-Subs)",
+             "alz-corp: interne Workloads (kein Public EP)\n"
+             "alz-online: internetseitige Dienste\n"
+             "alz-sandbox: Experimente / PoC"),
+            ("On-Prem-Anbindung",
+             "VPN Gateway: aktiv (Empfehlung)\n"
+             "ExpressRoute: deferred – aktivieren\n"
+             "bei ER-Leitungsbestellung\n"
+             "CrowdStrike-SIEM: Event-Hub-Export"),
+        ]
     )
     picture_slide(prs,
         "Zielarchitektur: Management Group Hierarchie",
         "alz-mg-hierarchy.png",
-        "Quelle: Microsoft Cloud Adoption Framework · learn.microsoft.com"
+        [
+            ("12 Management Groups",
+             "Vollständig per ALZ Bicep Accelerator\n"
+             "deployt – kein manueller Aufwand"),
+            ("Policy-Vererbung",
+             "149 Definitionen · 42 Initiativen\n"
+             "123 Assignments – alz-Root vererbt\n"
+             "an alle Child-MGs automatisch"),
+            ("DoNotEnforce-Start",
+             "Alle Policies starten im Audit-Modus.\n"
+             "Bestehende Ressourcen werden\n"
+             "gemeldet, nicht blockiert."),
+            ("Schutz bestehender Ressourcen",
+             "What-If vor jedem Subscription-Move.\n"
+             "Exemptions für Legacy-Ressourcen.\n"
+             "Enforcement erst nach Audit-Phase\n"
+             "(Empfehlung: 4–8 Wochen)."),
+        ]
     )
 
     # ── 4. Governance & Policies ──────────────────────────────────────────────
@@ -338,10 +451,30 @@ def build():
         ("Private DNS Zones + DNS Resolver: aktiv – unveraendert  ~€40/Monat", 0),
     ])
     picture_slide(prs,
-        "Netzwerk-Architektur: Hub-and-Spoke-Topologie",
+        "Netzwerk-Architektur: Hub-and-Spoke – Connectivity Subscription im Detail",
         "alz-hub-spoke.png",
-        "Connectivity Subscription: Firewall · Bastion · VPN/ExpressRoute · DNS Private Resolver  "
-        "| Quelle: Microsoft Cloud Adoption Framework"
+        [
+            ("Azure Firewall Standard",
+             "Zentraler Egress-Kontrollpunkt\n"
+             "FQDN-Filterung · NAT · Threat Intel\n"
+             "Upgrade → Premium ohne Rebuild\n"
+             "~€700/Monat (1 Region)"),
+            ("Gateways & Zugriff",
+             "VPN GW VpnGw1AZ: ~€140/Mon.\n"
+             "Azure Bastion: sicheres RDP/SSH\n"
+             "ohne Public IP · ~€120/Mon.\n"
+             "ExpressRoute GW: deferred"),
+            ("DNS & Private Connectivity",
+             "DNS Private Resolver: ~€25/Mon.\n"
+             "Private DNS Zones: ~€15/Mon.\n"
+             "Key Vault für Zertifikate\n"
+             "Event Hub → CrowdStrike SIEM"),
+            ("Spoke-Schutz",
+             "Jede Workload-Sub = eigenes VNet\n"
+             "Peering zum Hub-VNet\n"
+             "UDR: gesamter Traffic über\n"
+             "Azure Firewall zwingend geleitet"),
+        ]
     )
 
     # ── 6. Sicherheit ─────────────────────────────────────────────────────────
