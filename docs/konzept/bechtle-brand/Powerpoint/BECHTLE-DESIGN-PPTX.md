@@ -479,3 +479,339 @@ for ph in slide.placeholders:
 | Text zu groß für Box | Zu viele Bullets in Layout 16 | Max. 5 Zeilen pro Spalte; Schriftgröße ≤ 12pt |
 | Folie wirkt monoton | Nur Layout 14 verwendet | Abwechslung: 10 für Statement, 16 für Vergleich, 20 für Diagramm |
 | Bild überlappt Text | Layout 39 + manuelles Bild | Layout 19 oder 20 nutzen – Bild-PH begrenzt automatisch |
+
+---
+
+## Design-Rhythmus – Logische Kapitelstruktur
+
+> Damit Zuhörer unbewusst erkennen, wo sie in der Präsentation sind, folgt
+> **jedes technische Kapitel demselben Folienmuster**. Die Reihenfolge der
+> Layout-Typen ist das visuelle Signal – nicht nur der Text.
+
+### Kapitel-Muster (5–7 Folien pro Kapitel)
+
+```
+ 1. L6  – Divider       "Wo sind wir?"         → Kapitel-Nummer + Kernfrage
+ 2. L10 – Dark          "Was ist der Kern?"     → 1 Satz, starke Aussage   [max 1× pro 3 Kapitel]
+ 3. L20 – Big Picture   "Das große Bild"        → Architektur / Übersicht
+ 4. L27 – 3 Säulen      "Die drei Dimensionen"  → Gleichwertige Konzepte / Dienste
+ 5. L16 – Vergleich     "Vor und nach"          → Status quo vs. Ziel, A vs. B
+ 6. L14 – Details       "Die Fakten"            → Tiefe Bullet-Liste / Tabelle  [max 2× pro Kapitel]
+ 7. L9  – KPI           "Die Zahl"              → Kostengröße / Kennzahl  [optional]
+```
+
+**Nicht jeder Schritt ist Pflicht** – ein kurzes Kapitel kann L6 + L16 + L14 sein.
+Die *Reihenfolge* ist entscheidend: Vom großen Bild (L20) ins Detail (L14), nie umgekehrt.
+
+### Gesamt-Struktur einer 30–40-Folien-Präsentation
+
+| Block | Layouts | Folien | Funktion |
+|---|---|---|---|
+| Eröffnung | L0, L5, L10 | 3 | Marke, Agenda, Kernbotschaft |
+| Kapitel (je 5–7) | L6 + Mix | 5–7 × n | Fachinhalt |
+| Abschluss | L10, L9, L6 | 3–4 | CTA, Kosten, Nächste Schritte |
+
+### Anti-Patterns
+
+| ❌ Falsch | ✅ Richtig |
+|---|---|
+| 3+ L14 hintereinander | Nach max. 2× L14 kommt L16, L20 oder L27 |
+| L10 mehr als 3× gesamt | L10 höchstens 2–3× – sonst verliert es Wirkung |
+| L9 ohne Kontext | Vor L9-KPI immer eine erklärende Folie (L16 oder L14) |
+| L27 mit reinem Text, ohne Farbe | Bild-PH18/19/20 mit `colored_box()` füllen |
+| Breadcrumb leer | PH1 immer mit `§X · Kapitelname` befüllen |
+| Layout-Typ wechselt ohne Logik | Jedes Layout-Wechsel hat einen inhaltlichen Grund |
+
+---
+
+## Farbkodierung nach Architekturebene
+
+> Wenn `colored_box()` in L27-Säulen oder Akzentflächen verwendet wird,
+> signalisiert die Farbe konsistent die thematische Ebene. Zuhörer lernen
+> nach 2–3 Folien das System intuitiv.
+
+| Domäne | Farbe | Hex | Eingesetzt in |
+|---|---|---|---|
+| Governance / Policy | Dunkelgrün | `#075033` | L27 Governance-Säulen, L6 Divider |
+| Netzwerk / Connectivity | Mittelgrün | `#23A96A` | L27 Netzwerk-Säulen, L20 Bild-Akzent |
+| Sicherheit / Compliance | Limette | `#AADE0C` | L27 Security-Säulen, L9 KPI-Akzent |
+| Monitoring / Logging | Cyan | `#27C9D1` | L27 Logging-Säulen |
+| Identity / RBAC | Blau | `#346CEF` | L27 Identity-Säulen |
+| Neutral / Übergreifend | Grau | `#595959` | Fließtext, Metainfo |
+
+**Regel:** Innerhalb einer L27-Folie immer 3 *verschiedene* Farben –
+eine pro Säule – aus der obigen Tabelle. Nie zweimal dieselbe.
+
+```python
+# Beispiel: Governance-Kapitel, L27 – 3 Säulen
+C_DARK = RGBColor(0x07, 0x50, 0x33)   # Governance
+C_MID  = RGBColor(0x23, 0xA9, 0x6A)   # Netzwerk
+C_LIME = RGBColor(0xAA, 0xDE, 0x0C)   # Sicherheit
+
+three_col(prs, "§ 3 · Governance", "Drei Säulen der ALZ", [
+    ("Governance",  C_DARK, ["149 Policies", "12 MGs", "42 Initiativen"]),
+    ("Netzwerk",    C_MID,  ["Hub-and-Spoke", "Private DNS", "Firewall"]),
+    ("Sicherheit",  C_LIME, ["RBAC", "Defender", "Key Vault"]),
+])
+```
+
+---
+
+## Folienzahl-Budget (30–40-Folien-Deck)
+
+| Layout | Name | Min | Max | Empfehlung |
+|---|---|---|---|---|
+| L0 | Title Slide | 1 | 1 | Pflicht |
+| L5 | Agenda 4 Topics | 0 | 1 | 1× wenn ≥ 4 Kapitel |
+| L4 | Agenda | 0 | 1 | Alternative zu L5 |
+| L6 | Divider | n_kap | n_kap+2 | 1 pro Kapitel + Abschluss |
+| L9 | Highlight (KPI) | 0 | 4 | 1–2 pro Präsentation |
+| L10 | Highlight Dark | 1 | 3 | Eröffnung + max. 2 weitere |
+| L11 | Key Message | 0 | 2 | 1 starkes Zitat |
+| L14 | Titel und Inhalt | 0 | **40 %** | Nie > 40 % aller Folien |
+| L16 | 2x Text | 2 | 10 | 1–2 pro Kapitel |
+| L19 | Text + Medium Pic | 0 | 4 | Für Diagramme mit viel Erklärtext |
+| L20 | Text + Big Pic | 0 | 4 | Für dominante Architekturdiagramme |
+| L25 | 2x Bild + 2x Text | 0 | 3 | Feature-Paare, Service-Vergleiche |
+| L26 | 3x (asym.) | 0 | 2 | Wenn 2 Screenshots + Erklärung links |
+| L27 | 3x Text + 3x Bild | 0 | 5 | 1 pro Architekturebene |
+| L39 | Leer | 0 | 2 | Nur für Vollbild-Diagramme |
+
+---
+
+## Erweiterte Layout-Palette (bisher wenig genutzt)
+
+### Layout 1 – Title Slide with 2 Pictures + 2x Partner Logo *(Co-Branding)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 0 | CENTER_TITLE | 0,37"/1,58"/6,30"/2,36" | Haupttitel |
+| 1 | SUBTITLE | 0,37"/4,73"/3,94"/0,79" | Untertitel |
+| 14 | PICTURE | 5,36"/0,00"/5,97"/6,70" | Bild Mitte-rechts |
+| 16 | PICTURE | 9,03"/0,00"/4,30"/6,70" | Bild ganz rechts |
+| 17 | BODY | 0,37"/6,31"/3,15"/0,39" | Kleintext: Datum/Kunde |
+| 18 | OBJECT | 3,36"/0,40"/1,30"/0,39" | Partner-Logo 1 |
+| 19 | OBJECT | 4,86"/0,40"/1,30"/0,39" | Partner-Logo 2 |
+
+> **Einsatz:** Titelfolie für Microsoft–Bechtle-Co-Sell-Präsentationen.
+> Zwei Bildslots eignen sich für Referenz-Screenshots oder Architekturbilder.
+> Partner-Logo-Slots (PH18/19) für Kunden- oder Microsoft-Logo.
+
+### Layout 11 – Key message / Quote *(Kernbotschaft zentriert)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 0 | TITLE | 2,73"/1,98"/7,87"/3,54" | Großes Zitat (zentriert) |
+| 1 | SUBTITLE | 5,90"/0,80"/1,53"/0,28" | Quelle / Autor (klein) |
+
+> **Einsatz:** 1× pro Präsentation für eine einzige, starke Aussage – z. B.
+> als Einstieg in das Sicherheitskapitel oder als Abschluss-Statement.
+> Der Titel ist mittig auf der Folie – maximale Aufmerksamkeit.
+>
+> Beispiel: `PH0 = "Security by default, nicht by accident."` /
+> `PH1 = "Microsoft ALZ Design-Prinzip"`
+
+```python
+slide = prs.slides.add_slide(sl(prs, 11))
+set_text(slide, 1, "Microsoft ALZ Design-Prinzip", size=10)
+set_text(slide, 0, "Security by default,\nnicht by accident.", size=28, bold=True)
+```
+
+### Layout 12 – Quote Light *(Zitat, hell)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 0 | TITLE | 0,37"/0,80"/7,09"/3,94" | Zitat-Text (linksbündig) |
+| 13 | BODY | 0,37"/6,31"/2,36"/0,79" | Autor / Quelle |
+
+> **Einsatz:** Für externe Quellen – Analysten-Statements, Kunden-Zitate,
+> Microsoft-Dokumentation. Heller Hintergrund im Gegensatz zu L11.
+
+### Layout 15 – Text Right *(Titel prominent links, Inhalt rechts)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 1 | SUBTITLE | 0,37"/0,40"/4,72"/0,39" | Breadcrumb |
+| 0 | TITLE | 0,37"/0,80"/4,72"/2,36" | Großer Titel links (2,36" hoch) |
+| 13 | BODY | 0,37"/3,55"/4,72"/3,54" | Zusatztext links unten |
+| 15 | BODY | 6,67"/0,80"/3,94"/6,30" | Hauptinhalt rechts |
+
+> **Einsatz:** Wenn der Titel selbst die Hauptbotschaft trägt und der Inhalt
+> rechts die Details liefert. Gut für „Was bekommt der Kunde?"-Folien:
+> Links `"Was Sie bekommen"`, rechts die konkrete Leistungsliste.
+>
+> Tipp: PH15 (rechts) mit Bullets füllen, PH0 als großes Statement.
+
+```python
+slide = prs.slides.add_slide(sl(prs, 15))
+set_text(slide, 1, "§ 8 · Identity & RBAC", size=11)
+set_text(slide, 0, "Klare Rollen,\nklare Grenzen.", size=28, bold=True)
+set_text(slide, 13, "Jeder Zugriff ist dokumentiert,\nbegründet und widerrufbar.", size=12)
+set_bullets(slide, 15, [
+    "Reader / Contributor / Owner auf MG-Ebene",
+    "5 Custom-Rollen für ALZ-Betrieb",
+    "Entra ID Gruppen-gesteuert",
+    "PIM für privilegierte Aktionen",
+], size=12)
+```
+
+### Layout 25 – 2x Text + 2x Picture *(Feature-Paare)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 1 | SUBTITLE | 0,37"/0,40"/8,66"/0,39" | Breadcrumb |
+| 0 | TITLE | 0,37"/0,80"/8,66"/0,79" | Folientitel |
+| 18 | PICTURE | 0,37"/2,37"/5,91"/2,76" | Bild links oben |
+| 19 | PICTURE | 6,67"/2,37"/5,91"/2,76" | Bild rechts oben |
+| 13 | BODY | 0,37"/5,52"/5,91"/1,58" | Text links unten |
+| 14 | BODY | 6,67"/5,52"/5,91"/1,58" | Text rechts unten |
+
+> **Einsatz:** Zwei gleichwertige Azure-Dienste oder Features nebeneinander.
+> Schema: Bild oben (Screenshot / Architektur-Snippet) + Kurztext unten.
+> Text-Bereich ist niedrig (1,58") – nur Kurzaussagen, max. 2–3 Zeilen.
+>
+> Beispiel: Links `Azure Monitor` + `"VM-Metriken in Echtzeit"`,
+> rechts `Log Analytics` + `"Zentrales Query-Interface"`.
+
+```python
+slide = prs.slides.add_slide(sl(prs, 25))
+set_text(slide, 1, "§ 7 · Monitoring & Logging")
+set_text(slide, 0, "Zwei Werkzeuge – ein Überblick")
+# Bilder einfügen:
+for ph in slide.placeholders:
+    if ph.placeholder_format.idx == 18:
+        ph.insert_picture("images/azure-monitor.png")
+    elif ph.placeholder_format.idx == 19:
+        ph.insert_picture("images/log-analytics.png")
+set_bullets(slide, 13, ["VM-Metriken · Alerts · Dashboards"], size=12)
+set_bullets(slide, 14, ["KQL-Queries · DCRs · Workbooks"], size=12)
+```
+
+### Layout 26 – 3x Text + 2x Picture *(Text links + 2 Screenshots)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 1 | SUBTITLE | 0,37"/0,40"/3,94"/0,39" | Breadcrumb |
+| 0 | TITLE | 0,37"/0,80"/3,94"/2,36" | Großer Titel links |
+| 13 | BODY | 0,37"/3,16"/3,94"/3,94" | Haupttext links (groß) |
+| 18 | PICTURE | 4,70"/0,80"/3,94"/4,33" | Bild Mitte |
+| 14 | BODY | 4,70"/5,52"/3,94"/1,58" | Kurztext unter Mitte |
+| 19 | PICTURE | 9,03"/0,80"/3,94"/4,33" | Bild rechts |
+| 20 | BODY | 9,03"/5,52"/3,94"/1,58" | Kurztext unter Rechts |
+
+> **Einsatz:** Wenn ein erklärender Absatz links gebraucht wird und rechts
+> zwei Service-Screenshots oder Diagramm-Ausschnitte stehen.
+> Asymmetrisch – links dominiert der Text, rechts die Bilder.
+>
+> Ideal für: „Wie funktioniert DINE?" (links erklärt) + Screenshots von
+> DeployIfNotExists-Policy und Compliance-Dashboard (rechts).
+
+### Layout 28 – 4x Text + 3x Picture *(Kompakte 3-Dienste-Übersicht)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 1 | SUBTITLE | 0,37"/0,40"/3,94"/0,39" | Breadcrumb |
+| 0 | TITLE | 0,37"/0,80"/3,94"/2,36" | Titel links |
+| 13 | BODY | 0,37"/3,16"/3,94"/3,94" | Haupttext links |
+| 18 | PICTURE | 5,09"/0,80"/2,36"/3,15" | Screenshot Dienst 1 |
+| 14 | BODY | 5,09"/4,34"/2,36"/2,76" | Text Dienst 1 |
+| 19 | PICTURE | 7,85"/0,80"/2,36"/3,15" | Screenshot Dienst 2 |
+| 20 | BODY | 7,85"/4,34"/2,36"/2,76" | Text Dienst 2 |
+| 21 | PICTURE | 10,60"/0,80"/2,36"/3,15" | Screenshot Dienst 3 |
+| 22 | BODY | 10,60"/4,34"/2,36"/2,76" | Text Dienst 3 |
+
+> **Einsatz:** Drei Azure-Dienste kompakt: Bild oben, Text unten, Erklärung links.
+> Ähnlich wie L27 aber mit echten Screenshots statt farbigen Boxen.
+> Screenshots-Slots sind schmal (2,36") – UI-Ausschnitte, keine Diagramme.
+
+### Layout 29 – 4x Text + 4x Picture *(4er-Grid)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 1 | SUBTITLE | 0,37"/0,40"/8,66"/0,39" | Breadcrumb |
+| 0 | TITLE | 0,37"/0,80"/8,66"/0,79" | Folientitel |
+| 18 | PICTURE | 0,37"/2,37"/2,76"/2,76" | Bild 1 (oben links) |
+| 19 | PICTURE | 3,52"/2,37"/2,76"/2,76" | Bild 2 |
+| 20 | PICTURE | 6,67"/2,37"/2,76"/2,76" | Bild 3 |
+| 22 | PICTURE | 9,82"/2,37"/2,76"/2,76" | Bild 4 (oben rechts) |
+| 13 | BODY | 0,37"/5,52"/2,76"/1,58" | Text 1 |
+| 14 | BODY | 3,52"/5,52"/2,76"/1,58" | Text 2 |
+| 21 | BODY | 6,67"/5,52"/2,76"/1,58" | Text 3 |
+| 23 | BODY | 9,82"/5,52"/2,76"/1,58" | Text 4 |
+
+> **Einsatz:** Kompakte Referenzfolie mit 4 gleichwertigen Diensten/Features.
+> Jeder Slot: Icon oder UI-Screenshot oben, 1–2 Zeilen Text unten.
+> Gut für: „4 Kernkomponenten der ALZ", „4 Phasen des Projekts".
+
+### Layout 30 – Text + 4x Picture *(Text links + 2×2 Screenshot-Grid)*
+
+| PH | Typ | Position (l/t/w/h) | Verwendung |
+|---|---|---|---|
+| 1 | SUBTITLE | 0,37"/0,40"/3,94"/0,39" | Breadcrumb |
+| 0 | TITLE | 0,37"/0,80"/4,72"/1,57" | Folientitel |
+| 13 | BODY | 0,37"/2,37"/4,72"/4,73" | Haupttext links |
+| 18 | PICTURE | 6,67"/0,80"/2,95"/2,36" | Screenshot oben links |
+| 21 | PICTURE | 10,01"/0,80"/2,95"/2,36" | Screenshot oben rechts |
+| 22 | PICTURE | 6,67"/3,95"/2,95"/2,36" | Screenshot unten links |
+| 23 | PICTURE | 10,01"/3,95"/2,95"/2,36" | Screenshot unten rechts |
+| 14 | BODY | 6,67"/3,36"/2,95"/0,39" | Label oben links |
+| 30 | BODY | 10,01"/3,36"/2,95"/0,39" | Label oben rechts |
+| 31 | BODY | 6,67"/6,51"/2,95"/0,39" | Label unten links |
+| 32 | BODY | 10,01"/6,51"/2,95"/0,39" | Label unten rechts |
+
+> **Einsatz:** Wenn 4 Screenshots zu einem Thema gehören und links ein
+> erklärender Absatz steht. Gut für: Portal-Walkthrough mit 4 UI-Screens,
+> „Monitoring-Dashboards im Überblick".
+
+---
+
+## Konkrete Sequenz-Empfehlung pro Kapiteltyp
+
+### Governance-Kapitel (Policy, MGs, Compliance)
+```
+L6  Divider:      "§ 4 · Governance"  /  "149 Policies. 12 Management Groups."
+L11 Key Message:  "Compliance ist kein Projekt – sie ist der Betriebszustand."
+L20 Big Pic:      MG-Hierarchie-Diagramm + 3 Key-Facts links
+L27 3 Säulen:     Definitionen (dunkelgrün) / Initiativen (mittelgrün) / Assignments (limette)
+L16 Vergleich:    Ohne ALZ (manuell) vs. Mit ALZ (Policy-as-Code)
+L14 Details:      Policy-Effekte: Audit / Deny / DINE / DoNotEnforce
+L9  KPI:          "149 Policies – 0 manuelle Konfigurationen"
+```
+
+### Netzwerk-Kapitel (Hub-and-Spoke, Firewall, DNS)
+```
+L6  Divider:      "§ 5 · Netzwerk"  /  "Hub-and-Spoke. Zero-Trust-ready."
+L20 Big Pic:      Hub-Spoke-Topologie (dominantes Diagramm)
+L27 3 Säulen:     Connectivity (grün) / Sicherheit (limette) / DNS (cyan)
+L16 Vergleich:    Microsoft-Standard (links) vs. Bechtle-Empfehlung (rechts)
+L19 Med Pic:      Firewall-Regelwerk + Erklärung links
+L9  KPI:          "~€1.050 / Monat – Variante B"
+```
+
+### Kosten-Kapitel (Varianten, ROI)
+```
+L6  Divider:      "§ 10 · Kosten"  /  "4 Varianten. Eine Empfehlung."
+L9  KPI:          "~€1.050 / Monat"  (Bechtle-Empfehlung)
+L16 Vergleich:    Variante A (links: minimal) vs. Variante D (rechts: voll)
+L14 Details:      Kostentabelle alle 4 Varianten
+L10 Dark:         "Investition in Sicherheit – nicht in Betrieb."
+```
+
+---
+
+## Breadcrumb-Konventionen
+
+> PH1 (SUBTITLE) ist auf fast allen Layouts das Breadcrumb-Feld.
+> Es gibt der Folie Kontext und hilft beim Handout.
+
+| Format | Beispiel |
+|---|---|
+| Kapitel-Kontext | `"§ 4 · Governance"` |
+| Unterabschnitt | `"§ 4 · Governance – Policy-Effekte"` |
+| Kapitelübergreifend | `"Management Summary"` |
+| Divider (PH1 = Kernfrage) | `"Wie sieht Sicherheit als Code aus?"` |
+
+**Regeln:**
+- Immer `§X` + Kapitelname + optional Unterabschnitt
+- Maximal eine Zeile, ≤ 50 Zeichen
+- Nicht auf L10 (dunkel) – dort ist PH1 winzig und als Breadcrumb schwer lesbar
