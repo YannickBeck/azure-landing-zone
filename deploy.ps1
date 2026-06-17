@@ -7,10 +7,14 @@
 #   - Azure CLI >= 2.60 installiert (az version)
 #   - Bicep CLI >= 0.29 (az bicep upgrade)
 #   - Global Admin / Owner-Rechte auf Tenant-Ebene
-#   - Mindestens 4 Azure Subscriptions (Management, Connectivity, Identity, ggf. Corp)
 #
-# VERWENDUNG:
-#   .\deploy.ps1 -TenantId "<YOUR_TENANT_ID>"
+# VERWENDUNG (Produktion – mehrere Subscriptions):
+#   .\deploy.ps1 -TenantId "<ID>" -ManagementSubscriptionId "<ID>" -ConnectivitySubscriptionId "<ID>"
+#
+# VERWENDUNG (Demo / Smoke Run – eine einzige Subscription):
+#   .\deploy.ps1 -TenantId "<ID>" -SingleSubscriptionId "<ID>"
+#   Setzt ManagementSubscriptionId und ConnectivitySubscriptionId auf dieselbe Sub.
+#   Die MG-Hierarchie und alle Policies sind identisch mit Produktion.
 #
 # REIHENFOLGE der Deployments:
 #   1. Int-Root Management Group inkl. Policy-Guardrails (Tenant-Scope)
@@ -28,6 +32,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$TenantId,
+
+    # Demo/Smoke-Run: eine Subscription für alles
+    [Parameter(Mandatory = $false)]
+    [string]$SingleSubscriptionId = "",
 
     [Parameter(Mandatory = $false)]
     [string]$ManagementSubscriptionId = "",
@@ -62,6 +70,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptRoot = $PSScriptRoot
+
+# Single-Subscription-Modus: beide Rollen auf dieselbe Sub abbilden
+if ($SingleSubscriptionId) {
+    if (-not $ManagementSubscriptionId)    { $ManagementSubscriptionId    = $SingleSubscriptionId }
+    if (-not $ConnectivitySubscriptionId)  { $ConnectivitySubscriptionId  = $SingleSubscriptionId }
+    Write-Host "[INFO] Single-Subscription-Modus: alle Rollen → $SingleSubscriptionId" -ForegroundColor Magenta
+}
 
 # Colours for output
 function Write-Header { param($msg) Write-Host "`n========================================" -ForegroundColor Cyan; Write-Host " $msg" -ForegroundColor Cyan; Write-Host "========================================`n" -ForegroundColor Cyan }

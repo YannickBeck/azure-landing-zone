@@ -34,15 +34,28 @@ beschreibt das einmalige Setup – manuell per CLI oder automatisiert über
 
 ## Variablen
 
+**Produktion (mehrere Subscriptions):**
 ```bash
 ORG="YannickBeck"
 REPO="azure-landing-zone"
 APP_NAME="sp-alz-github-oidc"
 
 TENANT_ID="<DEINE_TENANT_ID>"
-ROOT_MG="$TENANT_ID"                 # Tenant Root MG = Tenant ID; oder 'alz' wenn bereits vorhanden
+ROOT_MG="$TENANT_ID"
 MGMT_SUB="<MANAGEMENT_SUBSCRIPTION_ID>"
 CONN_SUB="<CONNECTIVITY_SUBSCRIPTION_ID>"
+```
+
+**Demo / Single-Subscription:**
+```bash
+ORG="YannickBeck"
+REPO="azure-landing-zone"
+APP_NAME="sp-alz-github-oidc"
+
+TENANT_ID="<DEINE_TENANT_ID>"
+ROOT_MG="$TENANT_ID"
+MGMT_SUB="<DEINE_EINZIGE_SUBSCRIPTION_ID>"
+CONN_SUB="$MGMT_SUB"   # gleiche Sub für beide Rollen
 ```
 
 > **Scope-Hinweis:** Für das **erste** Deployment muss der Service Principal die
@@ -101,11 +114,21 @@ az role assignment create --assignee-object-id "$SP_OID" \
 
 ## Schritt 4 – GitHub-Secrets setzen
 
+**Produktion (zwei Subscriptions):**
 ```bash
-gh secret set AZURE_CLIENT_ID                 --repo "$ORG/$REPO" --body "$APP_ID"
-gh secret set AZURE_TENANT_ID                 --repo "$ORG/$REPO" --body "$TENANT_ID"
+gh secret set AZURE_CLIENT_ID                    --repo "$ORG/$REPO" --body "$APP_ID"
+gh secret set AZURE_TENANT_ID                    --repo "$ORG/$REPO" --body "$TENANT_ID"
 gh secret set AZURE_MANAGEMENT_SUBSCRIPTION_ID   --repo "$ORG/$REPO" --body "$MGMT_SUB"
 gh secret set AZURE_CONNECTIVITY_SUBSCRIPTION_ID --repo "$ORG/$REPO" --body "$CONN_SUB"
+```
+
+**Demo / Single-Subscription (ein Secret statt zwei):**
+```bash
+gh secret set AZURE_CLIENT_ID        --repo "$ORG/$REPO" --body "$APP_ID"
+gh secret set AZURE_TENANT_ID        --repo "$ORG/$REPO" --body "$TENANT_ID"
+gh secret set AZURE_SUBSCRIPTION_ID  --repo "$ORG/$REPO" --body "$MGMT_SUB"
+# AZURE_MANAGEMENT_SUBSCRIPTION_ID und AZURE_CONNECTIVITY_SUBSCRIPTION_ID
+# werden NICHT benötigt – die Pipeline erkennt AZURE_SUBSCRIPTION_ID als Fallback.
 ```
 
 ## Schritt 5 – GitHub-Environment `production`

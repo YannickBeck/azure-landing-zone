@@ -10,6 +10,67 @@ Ursache beheben, Stufe wiederholen.
 
 ---
 
+## Schnellstart: Demo / Single-Subscription
+
+Für einen Smoke Run in einer Demo- oder Testumgebung reicht **eine einzige Subscription**.
+Die MG-Hierarchie, alle 149 Policies und die vollständige Netzwerkarchitektur sind identisch
+mit der Produktionsumgebung – Logging und Hub-Netzwerk landen lediglich in derselben
+Subscription statt in zwei getrennten.
+
+```bash
+TENANT_ID="<DEINE_TENANT_ID>"
+DEMO_SUB="<DEINE_EINZIGE_SUBSCRIPTION_ID>"
+LOCATION="germanywestcentral"
+
+# Anmelden
+az login --tenant "$TENANT_ID"
+
+# Alle Stufen mit einer einzigen Subscription
+pwsh ./deploy.ps1 \
+  -TenantId        "$TENANT_ID" \
+  -SingleSubscriptionId "$DEMO_SUB" \
+  -WhatIf   # What-If zuerst; -WhatIf entfernen für echtes Deploy
+```
+
+Für den echten Deploy (ohne `-WhatIf`) empfiehlt sich für den Netzwerk-Teil,
+Firewall und Bastion initial zu deaktivieren (günstiger, schneller):
+
+```bash
+# In templates/networking/hubnetworking/main.bicepparam (primärer Hub-Block):
+#   deployAzureFirewall: false
+#   deployBastion: false
+# → VNet + DNS + Peering deployen sich kostenlos; Firewall/Bastion später zuschalten
+
+pwsh ./deploy.ps1 -TenantId "$TENANT_ID" -SingleSubscriptionId "$DEMO_SUB"
+```
+
+**Was ist in einer Subscription anders als in Produktion?**
+
+| Aspekt | Demo (1 Sub) | Produktion (4+ Subs) |
+|--------|-------------|----------------------|
+| MG-Hierarchie | identisch (12 MGs) | identisch |
+| Policies & RBAC | identisch (149/42/123) | identisch |
+| Logging (LAW, DCRs) | in Demo-Sub | in `sub-alz-management` |
+| Hub-Netzwerk (Firewall, DNS) | in Demo-Sub | in `sub-alz-connectivity` |
+| Subscription-Trennung | keine | blast-radius-Isolation |
+| Kosten | selber Betrag | selber Betrag |
+
+> Die Demo-Subscription kann später einfach in die richtige MG (z.B. `alz-platform-management`)
+> verschoben werden – alle Ressourcen bleiben unverändert.
+
+**GitHub Actions – Single-Subscription:**
+Statt `AZURE_MANAGEMENT_SUBSCRIPTION_ID` + `AZURE_CONNECTIVITY_SUBSCRIPTION_ID`
+reicht ein einziges Secret:
+```
+AZURE_SUBSCRIPTION_ID = <DEMO_SUB_ID>
+```
+Die Pipeline erkennt den Single-Sub-Modus automatisch und verwendet diesen Secret
+für alle Rollen.
+
+---
+
+---
+
 ## 0. Voraussetzungen
 
 | Tool | Version | Prüfen |

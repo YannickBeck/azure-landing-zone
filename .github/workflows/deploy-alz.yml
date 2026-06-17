@@ -109,6 +109,7 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          SINGLE_SUB: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           MGMT_SUB: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
           CONN_SUB: ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
         run: |
@@ -118,8 +119,13 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Azure OIDC-Secrets nicht konfiguriert - What-If wird uebersprungen."
           fi
-          [ -n "$MGMT_SUB" ] && echo "mgmt_ready=true" >> "$GITHUB_OUTPUT" || echo "mgmt_ready=false" >> "$GITHUB_OUTPUT"
-          [ -n "$CONN_SUB" ] && echo "conn_ready=true" >> "$GITHUB_OUTPUT" || echo "conn_ready=false" >> "$GITHUB_OUTPUT"
+          # Single-Sub-Modus: AZURE_SUBSCRIPTION_ID als Fallback fuer beide Rollen
+          EFFECTIVE_MGMT="${MGMT_SUB:-$SINGLE_SUB}"
+          EFFECTIVE_CONN="${CONN_SUB:-$SINGLE_SUB}"
+          [ -n "$EFFECTIVE_MGMT" ] && echo "mgmt_ready=true" >> "$GITHUB_OUTPUT" || echo "mgmt_ready=false" >> "$GITHUB_OUTPUT"
+          [ -n "$EFFECTIVE_CONN" ] && echo "conn_ready=true" >> "$GITHUB_OUTPUT" || echo "conn_ready=false" >> "$GITHUB_OUTPUT"
+          echo "mgmt_sub=$EFFECTIVE_MGMT" >> "$GITHUB_OUTPUT"
+          echo "conn_sub=$EFFECTIVE_CONN" >> "$GITHUB_OUTPUT"
 
       - name: Login to Azure (OIDC)
         if: steps.secrets.outputs.ready == 'true'
@@ -127,7 +133,7 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          subscription-id: ${{ steps.secrets.outputs.mgmt_sub }}
 
       - name: Upgrade Bicep
         if: steps.secrets.outputs.ready == 'true'
@@ -146,7 +152,7 @@ jobs:
       - name: What-If Logging
         if: steps.secrets.outputs.ready == 'true' && steps.secrets.outputs.mgmt_ready == 'true'
         run: |
-          az account set --subscription ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          az account set --subscription ${{ steps.secrets.outputs.mgmt_sub }}
           az deployment sub create \
             --name "alz-logging-whatif-${{ github.run_number }}" \
             --location ${{ env.PRIMARY_LOCATION }} \
@@ -157,7 +163,7 @@ jobs:
       - name: What-If Hub Networking
         if: steps.secrets.outputs.ready == 'true' && steps.secrets.outputs.conn_ready == 'true'
         run: |
-          az account set --subscription ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
+          az account set --subscription ${{ steps.secrets.outputs.conn_sub }}
           az deployment sub create \
             --name "alz-hubnetworking-whatif-${{ github.run_number }}" \
             --location ${{ env.PRIMARY_LOCATION }} \
@@ -175,12 +181,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ready: ${{ steps.check.outputs.ready }}
+      mgmt_sub: ${{ steps.check.outputs.mgmt_sub }}
+      conn_sub: ${{ steps.check.outputs.conn_sub }}
     steps:
       - name: Check Azure OIDC secrets
         id: check
         env:
           CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          SINGLE_SUB: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          MGMT_SUB: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          CONN_SUB: ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
         run: |
           if [ -n "$CLIENT_ID" ] && [ -n "$TENANT_ID" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -188,6 +199,13 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Azure OIDC-Secrets nicht konfiguriert - Deploy-Jobs werden uebersprungen."
           fi
+          # Single-Sub-Modus: AZURE_SUBSCRIPTION_ID als Fallback
+          EFFECTIVE_MGMT="${MGMT_SUB:-$SINGLE_SUB}"
+          EFFECTIVE_CONN="${CONN_SUB:-$SINGLE_SUB}"
+          echo "mgmt_sub=$EFFECTIVE_MGMT" >> "$GITHUB_OUTPUT"
+          echo "conn_sub=$EFFECTIVE_CONN" >> "$GITHUB_OUTPUT"
+          [ -n "$SINGLE_SUB" ] && [ -z "$MGMT_SUB" ] && \
+            echo "::notice::Single-Subscription-Modus aktiv: AZURE_SUBSCRIPTION_ID wird fuer alle Rollen verwendet."
 
   # ============================================================
   # Deploy Management Groups (Tenant-Scope)
@@ -288,13 +306,13 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+          subscription-id: ${{ needs.preflight.outputs.mgmt_sub }}
 
       - name: Upgrade Bicep
         run: az bicep upgrade
 
       - name: Set Management Subscription
-        run: az account set --subscription ${{ secrets.AZURE_MANAGEMENT_SUBSCRIPTION_ID }}
+        run: az account set --subscription ${{ needs.preflight.outputs.mgmt_sub }}
 
       - name: Deploy Logging Infrastructure
         run: |
@@ -326,13 +344,13 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
+          subscription-id: ${{ needs.preflight.outputs.conn_sub }}
 
       - name: Upgrade Bicep
         run: az bicep upgrade
 
       - name: Set Connectivity Subscription
-        run: az account set --subscription ${{ secrets.AZURE_CONNECTIVITY_SUBSCRIPTION_ID }}
+        run: az account set --subscription ${{ needs.preflight.outputs.conn_sub }}
 
       - name: Deploy Hub Networking
         run: |
