@@ -12,6 +12,7 @@ Abhängigkeit  : python-docx  (pip install python-docx)
 """
 
 import os
+import datetime
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -25,7 +26,7 @@ OUTPUT   = os.path.join(BASE_DIR, "Word", "Azure-Landing-Zone-Konzept.docx")
 
 # Platzhalter – ersetzen, sobald Kundenname bekannt ist
 KUNDE = "<KUNDE>"
-DATE  = "16.06.2026"
+DATE  = datetime.date.today().strftime("%d.%m.%Y")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -690,7 +691,7 @@ def build():
     add_bullet(doc, "Zentrales Logging (Log Analytics, DCRs, DINE-Policies)")
     add_bullet(doc, "Alle 5 Custom RBAC-Rollen und 18 Deploy-Stufen")
 
-    add_body(doc, "Was verschoben wird (deferred, nicht gestrichen):")
+    add_body(doc, "Was vorläufig zurückgestellt wird (nicht gestrichen):")
     add_bullet(doc,
         "Sekundäre Region (North Europe): Deployment auf Primärregion beschränkt; "
         "Ausbau auf zwei Regionen bei Bedarf jederzeit möglich",
@@ -819,7 +820,7 @@ def build():
     # ═════════════════════════════════════════════════════════════════════════
     doc.add_heading("8. Identity und RBAC", level=1)
 
-    doc.add_heading("8.1 5 Custom RBAC-Rollen", level=2)
+    doc.add_heading("8.1 Custom RBAC-Rollen", level=2)
     add_table(doc,
         ["Rolle", "Beschreibung", "Typische Zuweisung"],
         [
@@ -935,7 +936,7 @@ def build():
     add_body(doc,
         "Die Bechtle-Konfiguration stellt alle produktionsrelevanten Netzwerk- und "
         "Sicherheitsdienste in der Primärregion (Germany West Central) bereit. "
-        "Kein Funktionsverlust gegenueber dem Microsoft-Default – lediglich "
+        "Kein Funktionsverlust gegenüber dem Microsoft-Default – lediglich "
         "Dienste, die erst bei konkretem Bedarf relevant werden, sind initial deaktiviert."
     )
     add_table(doc,
@@ -950,17 +951,17 @@ def build():
             ["VPN Gateway (1 Region)",                  "Aktiv", "–"],
             ["Private DNS Zones",                       "Aktiv", "–"],
             ["DNS Private Resolver (1 Region)",         "Aktiv", "–"],
-            ["Firewall Premium (IDPS, TLS)",      "Deferred", "azureFirewallTier: Premium (In-Place-Upgrade, kein Rebuild)"],
-            ["DDoS Network Protection",           "Deferred", "deployDdosProtectionPlan: true (bei internet-facing Workloads)"],
-            ["ExpressRoute Gateway",              "Deferred", "deployExpressRouteGateway: true (bei ER-Leitungsbestellung)"],
-            ["Sekundaere Region (North Europe)",  "Deferred", "Zweiten Hub-Deployment-Lauf ausfuehren"],
+            ["Firewall Premium (IDPS, TLS)",      "Zurückgestellt", "azureFirewallTier: Premium (In-Place-Upgrade, kein Rebuild)"],
+            ["DDoS Network Protection",           "Zurückgestellt", "deployDdosProtectionPlan: true (bei internet-facing Workloads)"],
+            ["ExpressRoute Gateway",              "Zurückgestellt", "deployExpressRouteGateway: true (bei ER-Leitungsbestellung)"],
+            ["Sekundäre Region (optional)",  "Zurückgestellt", "Zweiten Hub-Deployment-Lauf ausführen"],
         ],
         col_widths=[2.6, 0.8, 3.6]
     )
 
     doc.add_heading("10.3 Gestufter Ausbau", level=2)
     add_table(doc,
-        ["Stufe", "Konfiguration", "Kosten/Monat", "Ausloser"],
+        ["Stufe", "Konfiguration", "Kosten/Monat", "Auslöser"],
         [
             ["1 – Governance-Pilot",
              "network_type: none",
@@ -971,13 +972,13 @@ def build():
              "~€1.050",
              "Erste Workloads; On-Prem-Anbindung geplant"],
             ["3 – Geo-Redundanz",
-             "+ Sekundar-Hub North Europe",
+             "+ Sekundär-Hub (optional)",
              "~€1.800",
              "SLA-Anforderungen erfordern zweite Region"],
             ["4 – Firewall Premium",
              "azureFirewallTier: Premium",
              "~€2.400",
-             "IDPS / TLS-Inspektion / URL-Filterung benoetigt"],
+             "IDPS / TLS-Inspektion / URL-Filterung benötigt"],
             ["5 – DDoS Protection",
              "deployDdosProtectionPlan: true",
              "~€4.900",
@@ -985,7 +986,7 @@ def build():
             ["6 – Microsoft-Default",
              "Alle Dienste, beide Regionen",
              "~€5.800",
-             "Vollstaendiger Enterprise-Standard"],
+             "Vollständiger Enterprise-Standard"],
         ],
         col_widths=[1.5, 2.3, 1.0, 2.2]
     )
@@ -1055,13 +1056,13 @@ def build():
              "✔ Ja",
              "– (Referenz)",
              "Keine – voller Funktionsumfang, VPN sofort verfügbar"],
-            ["B – Bechtle-Optimiert\n(VPN deferred +\n1-J.-Reservation FW)",
+            ["B – Bechtle-Optimiert\n(VPN zurückgestellt +\n1-J.-Reservation FW)",
              "~€770",
              "✔ Ja",
              "−€280/Mon.\n(26 % günstiger)",
              "VPN Gateway erst deployen wenn on-prem-Anbindung konkret geplant.\n"
              "1-Jahres-Bindung auf Firewall (Preisbindung, kein Architektur-Eingriff)."],
-            ["C – Bechtle-Budget\n(Firewall Basic,\nVPN deferred)\n⚠ ALZ-Bruch",
+            ["C – Bechtle-Budget\n(Firewall Basic,\nVPN zurückgestellt)\n⚠ ALZ-Bruch",
              "~€500",
              "✘ Nein",
              "−€550/Mon.\n(52 % günstiger)",
@@ -1086,7 +1087,7 @@ def build():
             ["Azure Firewall",        "Standard 1×  ~€700",         "Standard 1× reserved  ~€560", "Basic 1×  ~€300",   "Premium 2×  ~€2.200"],
             ["DDoS Protection",       "–",                           "–",                            "–",                 "Plan  ~€2.500"],
             ["ExpressRoute GW",       "–",                           "–",                            "–",                 "2×  ~€560"],
-            ["VPN Gateway",           "1× aktiv  ~€140",             "Deferred  €0",                 "Deferred  €0",      "2×  ~€280"],
+            ["VPN Gateway",           "1× aktiv  ~€140",             "Zurückgest.  €0",              "Zurückgest.  €0",   "2×  ~€280"],
             ["Azure Bastion",         "1×  ~€120",                   "1×  ~€120",                    "1×  ~€120",         "2×  ~€240"],
             ["DNS Private Resolver",  "1×  ~€25",                    "1×  ~€25",                     "1×  ~€25",          "2×  ~€50"],
             ["Private DNS Zones",     "~€15",                        "~€15",                         "~€15",              "~€15"],
@@ -1276,7 +1277,7 @@ def build():
     )
     add_bullet(doc, "Kickoff-Workshop (Discovery, Architektur-Entscheidungen, Entscheidungsprotokoll)")
     add_bullet(doc, "Bootstrap-Begleitung (technische Durchführung, Troubleshooting, Abnahme)")
-    add_bullet(doc, "Pilot-Pilotierung (erste Landing Zone, Spoke-Netzwerk, Workload-Onboarding)")
+    add_bullet(doc, "Pilotierung (erste Landing Zone, Spoke-Netzwerk, Workload-Onboarding)")
     add_bullet(doc, "Optionaler laufender Betrieb und Weiterentwicklung nach Abschluss der Grundimplementierung")
     doc.add_page_break()
 
