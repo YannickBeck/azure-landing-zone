@@ -536,14 +536,23 @@ def build():
     add_table(doc,
         ["Policy-Typ", "Beispiele", "Wirkung"],
         [
-            ["Verschlüsselung",        "Deny-Storage-http, Enforce-TLS-SSL",           "Erzwingt HTTPS/TLS für alle Storage-Accounts und Services"],
-            ["Netzwerk",               "Deny-Subnet-Without-Nsg, Deny-MgmtPorts",      "Jedes Subnetz braucht NSG; kein RDP/SSH aus Internet"],
-            ["Diagnose / Monitoring",  "Deploy-AzActivity-Log, Deploy-Diag-LogsCat",   "Activity Logs und Diagnose automatisch in Log Analytics"],
-            ["Defender",               "Deploy-MDFC-Config-H224, Deploy-MDEndpoints",  "Defender for Cloud automatisch per DeployIfNotExists aktiviert"],
-            ["Backup",                 "Deploy-VM-Backup",                              "VMs ohne Backup-Tag automatisch in Recovery Vault gesichert"],
-            ["Corp – Public Endpoints","Deny-Public-Endpoints, Deny-Public-IP-On-NIC", "Keine öffentlichen IPs oder PaaS-Endpunkte in corp-Zone"],
+            ["Verschlüsselung",          "Deny-Storage-http, Enforce-TLS-SSL",                "Erzwingt HTTPS/TLS für alle Storage-Accounts und Services"],
+            ["Netzwerk",                 "Deny-Subnet-Without-Nsg, Deny-MgmtPorts",           "Jedes Subnetz braucht NSG; kein RDP/SSH aus Internet"],
+            ["Diagnose / Monitoring",    "Deploy-AzActivity-Log, Deploy-Diag-LogsCat",        "Activity Logs und Diagnose automatisch in Log Analytics"],
+            ["Defender",                 "Deploy-MDFC-Config-H224, Deploy-MDEndpoints",       "Defender for Cloud automatisch per DeployIfNotExists aktiviert"],
+            ["Backup",                   "Deploy-VM-Backup",                                  "VMs ohne Backup-Tag automatisch in Recovery Vault gesichert"],
+            ["Corp – Public Endpoints",  "Deny-Public-Endpoints, Deny-Public-IP-On-NIC",      "Keine öffentlichen IPs oder PaaS-Endpunkte in corp-Zone"],
+            ["SQL & Datenbanken",        "Deploy-SQL-Tde, Deny-Sql-MinTLS, Deploy-MDFC-SqlAtp","Transparent Data Encryption, TLS 1.2+, Defender for SQL aktiv"],
+            ["Storage – vollständig",    "Deny-Storage-SharedKey, Deny-Storage-PublicAccess,\nDeny-Storage-SFTP", "Shared Key deaktiviert, kein öffentlicher Blob-Zugriff, SFTP gesperrt"],
+            ["Governance & Tagging",     "Audit-Tags-Mandatory-Rg, Deny-Classic-Resources,\nEnforce-ACSB",       "Pflicht-Tags auf Resource Groups, keine klassischen Ressourcen, Sicherheitsbaseline"],
+            ["RBAC-Schutz",              "DenyAction-DeleteUAMIAMA",                          "Schützt die Managed Identity der Monitoring-Agenten vor versehentlicher Löschung"],
+            ["Guardrails je Dienst",     "Enforce-Guardrails-KeyVault, -AKS,\n-AppServices, -OpenAI (28 Initiativen)", "Dienstspezifische Sicherheitsleitplanken für alle gängigen Azure-Dienste"],
+            ["Update Management",        "Deploy-AUMConfigure-VMLinuxAzure,\nDeploy-AUMConfigure-VMWinAzure",   "Automatisches Patch-Management für alle Linux- und Windows-VMs"],
+            ["Private DNS",              "Deploy-Private-DNS-Zones (59 Policies)",            "Private Endpunkte werden automatisch in Private DNS Zones registriert"],
+            ["Sandbox & Decommissioned", "Enforce-ALZ-Sandbox, Enforce-ALZ-Decomm",           "Sandbox: nur erlaubte Dienste; Decomm: blockiert alle neuen Ressourcen"],
+            ["Sovereign / Local",        "Enforce-ALDO-Services",                             "Auf alz-landingzones-local: ausschließlich in GWC erlaubte Azure-Dienste"],
         ],
-        col_widths=[1.8, 2.5, 2.7]
+        col_widths=[1.8, 2.4, 2.8]
     )
     p = doc.add_paragraph(style="Standard klein")
     p.add_run(
@@ -567,8 +576,10 @@ def build():
         "Firewall im Hub."
     )
     add_body(doc,
-        "Es werden zwei Hub-VNets deployed – eines je Region – die bidirektional "
-        "gepeert sind. Spokes werden pro Region an den jeweiligen Hub angebunden."
+        "Es wird ein Hub-VNet in der Primärregion Germany West Central deployed. "
+        "Spokes werden über VNet-Peering an den Hub angebunden und nutzen gemeinsam "
+        "Firewall, Bastion und DNS. Ein zweiter Hub in einer Sekundärregion ist für "
+        "spätere Geo-Redundanz vorgesehen, aber nicht Teil des initialen Deployments."
     )
     add_img(doc, "alz-hub-spoke.png",
         "Abb. 3: Hub-and-Spoke-Netzwerktopologie – Connectivity Subscription mit Firewall, "
