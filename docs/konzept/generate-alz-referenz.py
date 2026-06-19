@@ -727,37 +727,45 @@ add_table(doc,
 )
 
 doc.add_heading("6.2 Logging & Monitoring Module", level=2)
+add_body(doc,
+    "Bechtle-Empfehlung: 1 Region (GWC). Alle Logging-Ressourcen werden einmalig "
+    "in der Primärregion Germany West Central deployt.", size=10)
 add_table(doc,
     ["Ressource", "Name-Konvention", "AVM-Modul", "Region"],
     [
-        ["Log Analytics Workspace",    "law-alz-<region>",         "avm/res/operational-insights/workspace:0.9.0",    "GWC + NE"],
-        ["Managed Identity (AMA)",     "mi-alz-<region>",          "avm/res/managed-identity/user-assigned-identity", "GWC + NE"],
-        ["DCR – VM Insights",          "dcr-vminsights-alz-<r>",   "avm/ptn/alz/ama:0.2.0",                          "GWC + NE"],
-        ["DCR – Change Tracking",      "dcr-changetracking-alz-<r>","avm/ptn/alz/ama:0.2.0",                          "GWC + NE"],
-        ["DCR – Defender SQL",         "dcr-mdfcsql-alz-<r>",      "avm/ptn/alz/ama:0.2.0",                          "GWC + NE"],
-        ["Data Collection Endpoint",   "dce-alz-<region>",         "avm/res/insights/data-collection-endpoint",       "GWC + NE"],
-        ["Automation Account",         "aa-alz-<region>",          "avm/res/automation/automation-account",           "GWC + NE"],
+        ["Log Analytics Workspace",    "law-alz-germanywestcentral",    "avm/res/operational-insights/workspace:0.9.0",    "GWC"],
+        ["Managed Identity (AMA)",     "mi-alz-germanywestcentral",     "avm/res/managed-identity/user-assigned-identity", "GWC"],
+        ["DCR – VM Insights",          "dcr-vmi-alz-germanywestcentral","avm/ptn/alz/ama:0.2.0",                          "GWC"],
+        ["DCR – Change Tracking",      "dcr-ct-alz-germanywestcentral", "avm/ptn/alz/ama:0.2.0",                          "GWC"],
+        ["DCR – Defender SQL",         "dcr-mdfcsql-alz-germanywestcentral","avm/ptn/alz/ama:0.2.0",                      "GWC"],
+        ["Data Collection Endpoint",   "dce-alz-germanywestcentral",    "avm/res/insights/data-collection-endpoint",       "GWC"],
+        ["Automation Account",         "aa-alz-germanywestcentral",     "avm/res/automation/automation-account",           "GWC (optional)"],
     ],
-    col_widths=[2.2, 2.2, 2.5, 1.1]
+    col_widths=[2.2, 2.6, 2.3, 0.9]
 )
 
-doc.add_heading("6.3 Netzwerk-Module (Hub per Region)", level=2)
+doc.add_heading("6.3 Netzwerk-Module (Hub – Primärregion GWC)", level=2)
+add_body(doc,
+    "Bechtle-Empfehlung (Variante A/B, ~€1.050/Monat): 1 Hub in Germany West Central, "
+    "Firewall Standard. Kein zweiter Hub – Geo-Redundanz nur bei Variante D (Microsoft Default, ~€5.800/Monat).", size=10)
 add_table(doc,
-    ["Ressource", "Name-Konvention", "AVM-Modul", "Hub 1 (GWC)", "Hub 2 (NE)"],
+    ["Ressource", "Name-Konvention", "AVM-Modul", "Hub GWC", "Status"],
     [
-        ["Virtual Network (Hub)", "vnet-alz-hub-<r>",   "avm/res/network/virtual-network", "10.0.0.0/24",  "10.1.0.0/24"],
-        ["Azure Firewall Premium","afw-alz-<r>",         "avm/res/network/azure-firewall",  "10.0.0.4",     "10.1.0.4"],
-        ["Firewall Policy",       "afwp-alz-<r>",        "avm/res/network/firewall-policy", "Standard→Premium","Standard→Premium"],
-        ["Azure Bastion Standard","bas-alz-<r>",         "avm/res/network/bastion-host",    "10.0.0.64/26", "10.1.0.64/26"],
-        ["VPN Gateway (VpnGw1AZ)","vpngw-alz-<r>",      "avm/res/network/vpn-gateway",     "10.0.0.128/27","10.1.0.128/27"],
-        ["ExpressRoute Gateway",  "ergw-alz-<r>",        "avm/res/network/express-route-gateway","10.0.0.128/27","10.1.0.128/27"],
-        ["DNS Private Resolver",  "dnspr-alz-<r>",       "avm/res/network/dns-resolver",    "10.0.0.160/28","10.1.0.160/28"],
-        ["Public IP (Firewall)",  "pip-afw-alz-<r>",    "avm/res/network/public-ip-address","Zone-redundant","Zone-redundant"],
-        ["Public IP (Bastion)",   "pip-bas-alz-<r>",    "avm/res/network/public-ip-address","Zone-redundant","Zone-redundant"],
-        ["Public IP (VPN GW)",    "pip-vpngw-alz-<r>",  "avm/res/network/public-ip-address","Zone-redundant","Zone-redundant"],
-        ["DDoS Protection Plan",  "ddos-alz",            "avm/res/network/ddos-protection-plan","Region-unabhängig","–"],
+        ["Virtual Network (Hub)",  "vnet-alz-germanywestcentral",     "avm/res/network/virtual-network",          "10.0.0.0/22",  "Aktiv"],
+        ["Azure Firewall Standard","afw-alz-germanywestcentral",      "avm/res/network/azure-firewall",           "10.0.0.0/26",  "Aktiv"],
+        ["Firewall Policy",        "afwp-alz-germanywestcentral",     "avm/res/network/firewall-policy",          "Standard",     "Aktiv"],
+        ["Azure Bastion Standard", "bas-alz-germanywestcentral",      "avm/res/network/bastion-host",             "10.0.0.64/26", "Aktiv"],
+        ["VPN Gateway (VpnGw1AZ)", "vgw-alz-germanywestcentral",     "avm/res/network/virtual-network-gateway",  "10.0.0.128/27","Aktiv"],
+        ["DNS Private Resolver",   "dnspr-alz-germanywestcentral",    "avm/res/network/dns-resolver",             "10.0.0.160/28","Aktiv"],
+        ["Public IP (Firewall)",   "pip-afw-alz-germanywestcentral",  "avm/res/network/public-ip-address",        "Zone-redundant","Aktiv"],
+        ["Public IP (Bastion)",    "pip-bas-alz-germanywestcentral",  "avm/res/network/public-ip-address",        "Zone-redundant","Aktiv"],
+        ["Public IP (VPN GW)",     "pip-vpngw-alz-germanywestcentral","avm/res/network/public-ip-address",        "Zone-redundant","Aktiv"],
+        ["ExpressRoute Gateway",   "ergw-alz-germanywestcentral",     "avm/res/network/express-route-gateway",    "10.0.0.128/27","Zurückgestellt"],
+        ["DDoS Protection Plan",   "ddos-alz",                        "avm/res/network/ddos-protection-plan",     "–",            "Zurückgestellt"],
+        ["Firewall Premium",       "(Upgrade, kein Rebuild)",         "avm/res/network/azure-firewall",           "In-Place",     "Zurückgestellt"],
+        ["Sekundärer Hub (opt.)",  "vnet-alz-<region>",              "avm/res/network/virtual-network",          "10.1.0.0/22",  "Nur Variante D"],
     ],
-    col_widths=[1.8, 2.0, 2.2, 1.3, 0.7]
+    col_widths=[1.8, 2.3, 2.0, 1.1, 1.0]
 )
 
 doc.add_heading("6.4 Subscription Vending Module", level=2)
