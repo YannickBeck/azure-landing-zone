@@ -29,18 +29,14 @@ subscriptions:
   #   - id: "<CORP_SUB_01_ID>"
   #     displayName: "Corp-Workload-01"
 
-# Management Group Hierarchie
+# Management Group Hierarchie (8 MGs – Kunden-Minimalmodell)
+# Nicht verwendete MGs (identity, management, security, online, local) bei Bedarf ergänzbar.
 # Tenant Root (automatisch)
 # └── alz (Intermediate Root)
 #     ├── alz-platform (Platform)
-#     │   ├── alz-platform-connectivity
-#     │   ├── alz-platform-identity
-#     │   ├── alz-platform-management
-#     │   └── alz-platform-security
+#     │   └── alz-platform-connectivity
 #     ├── alz-landingzones (Landing Zones)
-#     │   ├── alz-landingzones-corp
-#     │   ├── alz-landingzones-online
-#     │   └── alz-landingzones-local
+#     │   └── alz-landingzones-corp
 #     ├── alz-sandbox
 #     └── alz-decommissioned
 
@@ -54,22 +50,24 @@ managementGroups:
     children:
       - id: alz-platform-connectivity
         displayName: "Connectivity"
-      - id: alz-platform-identity
-        displayName: "Identity"
-      - id: alz-platform-management
-        displayName: "Management"
-      - id: alz-platform-security
-        displayName: "Security"
+      # Nicht im Kunden-Minimal-Setup – bei Bedarf ergänzen:
+      # - id: alz-platform-identity
+      #   displayName: "Identity"
+      # - id: alz-platform-management
+      #   displayName: "Management"
+      # - id: alz-platform-security
+      #   displayName: "Security"
   landingZones:
     id: alz-landingzones
     displayName: "Landing Zones"
     children:
       - id: alz-landingzones-corp
         displayName: "Corp"
-      - id: alz-landingzones-online
-        displayName: "Online"
-      - id: alz-landingzones-local
-        displayName: "Local"
+      # Nicht im Kunden-Minimal-Setup – bei Bedarf ergänzen:
+      # - id: alz-landingzones-online
+      #   displayName: "Online"
+      # - id: alz-landingzones-local
+      #   displayName: "Local"
   sandbox:
     id: alz-sandbox
     displayName: "Sandbox"

@@ -1,7 +1,7 @@
 // ================================================================ //
 // ALZ Platform Management Group + Sub-Management-Groups
-// Erstellt: Platform und darunter Connectivity, Identity,
-//           Management, Security.
+// Erstellt: Platform und darunter Connectivity.
+// Nicht verwendet (bei Bedarf ergänzen): Identity, Management, Security.
 // Scope: Tenant
 // ================================================================ //
 
@@ -29,9 +29,10 @@ param parChildMgIdPrefix string = 'alz-platform-'
 
 var varChildren = [
   { suffix: 'connectivity', displayName: 'Connectivity' }
-  { suffix: 'identity', displayName: 'Identity' }
-  { suffix: 'management', displayName: 'Management' }
-  { suffix: 'security', displayName: 'Security' }
+  // Nicht im Kunden-Minimal-Setup – bei Bedarf ergänzen:
+  // { suffix: 'identity',     displayName: 'Identity' }
+  // { suffix: 'management',   displayName: 'Management' }
+  // { suffix: 'security',     displayName: 'Security' }
 ]
 
 // ================ //

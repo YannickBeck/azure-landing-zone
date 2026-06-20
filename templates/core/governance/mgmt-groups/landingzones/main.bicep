@@ -1,6 +1,7 @@
 // ================================================================ //
 // ALZ Landing Zones Management Group + Sub-Management-Groups
-// Erstellt: Landing Zones und darunter Corp, Online, Local.
+// Erstellt: Landing Zones und darunter Corp.
+// Nicht im Kunden-Minimal-Setup (bei Bedarf ergänzen): Online, Local.
 // Scope: Tenant
 // ================================================================ //
 
@@ -31,8 +32,9 @@ param parDenyNicPublicIpOnCorp bool = true
 
 var varChildren = [
   { suffix: 'corp', displayName: 'Corp' }
-  { suffix: 'online', displayName: 'Online' }
-  { suffix: 'local', displayName: 'Local' }
+  // Nicht im Kunden-Minimal-Setup – bei Bedarf ergänzen:
+  // { suffix: 'online', displayName: 'Online' }
+  // { suffix: 'local',  displayName: 'Local' }
 ]
 
 // ================ //
