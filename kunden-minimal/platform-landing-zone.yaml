@@ -1,0 +1,173 @@
+# ============================================================
+# Azure Landing Zone - Kunden-Minimal Konfiguration
+# 3 Subscriptions: Connectivity, Produktion, Sandbox
+# Kosten: ~€765/Monat (Firewall Standard + Logging + Private DNS)
+#
+# Ersetze alle <PLATZHALTER> mit deinen echten Werten
+# ============================================================
+
+# Deployment-Region (nur eine Region im Minimal-Setup)
+locations:
+  primary: germanywestcentral
+
+# Azure Tenant & Subscriptions (3 Stück)
+tenant:
+  id: "<TENANT_ID>"
+
+subscriptions:
+  connectivity:
+    id: "<CONNECTIVITY_SUBSCRIPTION_ID>"
+    displayName: "ALZ-Connectivity"
+    managementGroup: alz-platform-connectivity
+    inhalt: "Hub-VNet, Azure Firewall, Log Analytics, Private DNS Zones"
+  produktion:
+    id: "<PRODUKTION_SUBSCRIPTION_ID>"
+    displayName: "ALZ-Produktion"
+    managementGroup: alz-landingzones-corp
+    inhalt: "Erste Workload-Spoke-VNets, Produktionsressourcen"
+  sandbox:
+    id: "<SANDBOX_SUBSCRIPTION_ID>"
+    displayName: "ALZ-Sandbox"
+    managementGroup: alz-sandbox
+    inhalt: "Entwicklung, Tests, Experimente – gelockerte Policies"
+
+# Management Group Hierarchie (8 MGs – bewusst minimal)
+# Tenant Root (automatisch)
+# └── alz (Intermediate Root)
+#     ├── alz-platform
+#     │   └── alz-platform-connectivity   → Connectivity Sub
+#     ├── alz-landingzones
+#     │   └── alz-landingzones-corp       → Produktion Sub
+#     ├── alz-sandbox                     → Sandbox Sub
+#     └── alz-decommissioned              → Stilllegungszone
+#
+# Nicht verwendet (bei Bedarf ergänzen):
+#   alz-platform-identity    → eigene Identity-Subscription (AD DS, Entra Connect)
+#   alz-platform-management  → eigene Management-Subscription (Logging separieren)
+#   alz-platform-security    → eigene Security-Subscription (Defender-Tooling)
+#   alz-landingzones-online  → internet-facing Workloads (Public APIs)
+#   alz-landingzones-local   → souveräne Workloads (Azure Local)
+
+managementGroups:
+  intRoot:
+    id: alz
+    displayName: "Azure Landing Zones"
+  platform:
+    id: alz-platform
+    displayName: "Platform"
+    children:
+      - id: alz-platform-connectivity
+        displayName: "Connectivity"
+        subscription: connectivity
+  landingZones:
+    id: alz-landingzones
+    displayName: "Landing Zones"
+    children:
+      - id: alz-landingzones-corp
+        displayName: "Corp"
+        subscription: produktion
+  sandbox:
+    id: alz-sandbox
+    displayName: "Sandbox"
+    subscription: sandbox
+  decommissioned:
+    id: alz-decommissioned
+    displayName: "Decommissioned"
+
+# Logging (läuft in der Connectivity Subscription)
+logging:
+  subscription: connectivity
+  resourceGroup: "rg-alz-logging-germanywestcentral"
+  logAnalyticsWorkspace:
+    name: "law-alz-germanywestcentral"
+    sku: "PerGB2018"
+    retentionDays: 365
+    sentinel: false
+    solutions:
+      - ChangeTracking
+  managedIdentity:
+    name: "mi-alz-germanywestcentral"
+  automationAccount:
+    deploy: false
+    name: "aa-alz-germanywestcentral"
+
+# Governance
+governance:
+  policies:
+    allowedLocations:
+      - germanywestcentral           # Nur eine Region im Minimal-Setup
+    requiredTagName: "Environment"
+    storageSecureTransferEffect: Deny
+    denyNicPublicIpOnCorp: true
+  rbac:
+    # Role Assignments in templates/core/governance/rbac/main.bicepparam
+    # Beispiel:
+    # - managementGroupId: alz-platform
+    #   principalId: "<ENTRA_GROUP_OBJECT_ID>"
+    #   roleDefinition: Owner
+
+# Subscription Vending
+subscriptionVending:
+  enabled: false
+  mode: placement
+  targetManagementGroup: alz-landingzones-corp
+
+# Netzwerk – Kunden-Minimal
+# Aktiv:         Azure Firewall Standard, Private DNS Zones, Log Analytics
+# Zurückgestellt: Bastion, VPN Gateway, DNS Private Resolver, ExpressRoute, DDoS
+networking:
+  type: hubNetworking
+
+  hubNetworking:
+    primaryHub:
+      name: "vnet-alz-germanywestcentral"
+      location: germanywestcentral
+      addressPrefix: "10.0.0.0/22"
+      subscription: connectivity
+      resourceGroup: "rg-alz-conn-germanywestcentral"
+      azureFirewall:
+        deploy: true
+        sku: Standard
+        name: "afw-alz-germanywestcentral"
+        firewallPolicy:
+          name: "afwp-alz-germanywestcentral"
+          baseRules: true
+      bastion:
+        deploy: false                # Zurückgestellt: Kunde hat eigenen Gateway
+                                     # Aktivieren mit deployBastion: true wenn kein VPN-Tunnel vorhanden
+      vpnGateway:
+        deploy: false                # Zurückgestellt: aktivieren wenn On-Prem konkret geplant
+        name: "vgw-alz-germanywestcentral"
+        sku: VpnGw1AZ
+        # Kosten wenn aktiviert: ~€140/Monat
+      expressRouteGateway:
+        deploy: false
+      dnsPrivateResolver:
+        deploy: false                # Zurückgestellt: aktivieren wenn Custom DNS benötigt
+      ddosProtection:
+        deploy: false                # ACHTUNG: ~€2.500/Monat Fixkosten
+      privateDnsZones:
+        deploy: true                 # Private DNS Zones: ~€15/Monat
+
+    # Kein sekundärer Hub im Minimal-Setup.
+    # Geo-Redundanz bei Bedarf: secondaryHub mit location: northeurope, addressPrefix: 10.1.0.0/22
+
+  spoke:
+    # Erste Workload-Spoke (Produktion Sub, nach Hub-Deployment befüllen)
+    produktion-app01:
+      workloadName: prod-app01
+      subscription: produktion
+      location: germanywestcentral
+      addressPrefix: "10.2.0.0/24"
+      firewallTransit: true          # Default-Route über Hub-Firewall (Pflicht in Corp MG)
+
+# Tags
+tags:
+  Environment: Production
+  ManagedBy: Platform Team
+  CostCenter: IT-Platform
+
+# Kontaktinformationen für Policies
+contacts:
+  securityEmail: "security@<YOUR_DOMAIN>"
+  operationsEmail: "ops@<YOUR_DOMAIN>"
