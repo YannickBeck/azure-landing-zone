@@ -386,15 +386,10 @@ def build():
         "Tenant Root\n"
         "└─ alz  (Intermediate Root)\n"
         "   ├─ alz-platform\n"
-        "   │   ├─ alz-platform-connectivity   → Hub-Netzwerk, Firewall, DNS\n"
-        "   │   ├─ alz-platform-identity       → Identity-Dienste\n"
-        "   │   ├─ alz-platform-management     → Logging, Monitoring\n"
-        "   │   └─ alz-platform-security       → Security-Tooling\n"
+        "   │   └─ alz-platform-connectivity   → Hub-Netzwerk, Firewall, Logging\n"
         "   ├─ alz-landingzones\n"
-        "   │   ├─ alz-landingzones-corp       → intern, keine Public Endpoints\n"
-        "   │   ├─ alz-landingzones-online     → internetseitige Workloads\n"
-        "   │   └─ alz-landingzones-local      → souverän / vertraulich\n"
-        "   ├─ alz-sandbox                     → Experimente (gelockerte Policies)\n"
+        "   │   └─ alz-landingzones-corp       → Produktions-Workloads\n"
+        "   ├─ alz-sandbox                     → Entwicklung / Experimente\n"
         "   └─ alz-decommissioned              → Stilllegung (gesperrt)"
     )
     tree_r.font.name = "Courier New"
@@ -402,22 +397,24 @@ def build():
     doc.add_paragraph()
 
     add_table(doc,
-        ["Management Group", "Parent", "Zweck"],
+        ["Management Group", "Parent", "Subscription", "Zweck"],
         [
-            ["alz (Intermediate Root)", "Tenant Root", "Einstieg für alle ALZ-Policies; alle anderen MGs erben von hier"],
-            ["alz-platform", "alz", "Container für alle Plattform-Dienste-Subscriptions"],
-            ["alz-platform-connectivity", "alz-platform", "Hub-Netzwerk, Firewall, DNS, Gateway-Subscriptions"],
-            ["alz-platform-identity", "alz-platform", "Identity-Dienste (AD DS, Entra Connect – Roadmap)"],
-            ["alz-platform-management", "alz-platform", "Logging (Log Analytics), Monitoring, Operations"],
-            ["alz-platform-security", "alz-platform", "Security-Tooling, Defender-Konfiguration"],
-            ["alz-landingzones", "alz", "Container für alle Workload-Subscriptions"],
-            ["alz-landingzones-corp", "alz-landingzones", "Interne Workloads ohne Public Endpoints; strengste Policies"],
-            ["alz-landingzones-online", "alz-landingzones", "Internetseitige Workloads (z. B. Public APIs, Websites)"],
-            ["alz-landingzones-local", "alz-landingzones", "Souveräne / vertrauliche Workloads (Azure Local)"],
-            ["alz-sandbox", "alz", "Experimentier-Bereich mit gelockerten Policies"],
-            ["alz-decommissioned", "alz", "Stilllegungszone; Ressourcen-Erstellung gesperrt"],
+            ["alz (Intermediate Root)",  "Tenant Root",    "–",             "Basis für alle Policies; alle untergeordneten MGs erben von hier"],
+            ["alz-platform",             "alz",            "–",             "Container für Plattform-Dienste"],
+            ["alz-platform-connectivity","alz-platform",   "Connectivity",  "Hub-Netzwerk, Firewall, Log Analytics, DNS, Gateways"],
+            ["alz-landingzones",         "alz",            "–",             "Container für Workload-Subscriptions"],
+            ["alz-landingzones-corp",    "alz-landingzones","Produktion",   "Produktions-Workloads; keine Public Endpoints; strengste Policies"],
+            ["alz-sandbox",              "alz",            "Sandbox",       "Entwicklung & Tests; gelockerte Policies"],
+            ["alz-decommissioned",       "alz",            "–",             "Stilllegungszone; Ressourcen-Erstellung gesperrt"],
         ],
-        col_widths=[2.3, 1.8, 2.9]
+        col_widths=[2.2, 1.5, 1.3, 2.0]
+    )
+    p = doc.add_paragraph(style="Standard klein")
+    p.add_run(
+        "Nicht enthalten (bewusst weggelassen): alz-platform-identity, alz-platform-management, "
+        "alz-platform-security, alz-landingzones-online, alz-landingzones-local. "
+        "Diese MGs werden erst hinzugefügt, wenn ein konkreter Bedarf entsteht. "
+        "Alle Policies und RBAC-Regeln greifen bereits über die übergeordneten MGs."
     )
     add_img(doc, "alz-mg-hierarchy.png",
         "Abb. 2: Management-Group-Hierarchie mit Policy-Vererbung "
@@ -426,21 +423,32 @@ def build():
 
     doc.add_heading("3.2 Subscription-Strategie", level=2)
     add_body(doc,
-        "Der Einstieg erfolgt mit einer einzelnen Subscription (Single-Subscription-Setup). "
-        "Alle vier Plattform-Rollen (Management, Connectivity, Identity, Security) werden "
-        "auf dieselbe Subscription abgebildet. Die Trennung in vier dedizierte "
-        "Platform-Subscriptions kann jederzeit nachgeholt werden – die MG-Hierarchie "
-        "und alle Policies bleiben dabei unverändert."
+        "Der Kunde startet mit drei dedizierten Subscriptions – eine je Zweck. "
+        "Jede Subscription landet in der passenden Management Group und erbt "
+        "automatisch alle Policies, RBAC-Regeln und Logging-Konfigurationen."
     )
     add_table(doc,
-        ["Phase", "Subscription-Modell", "Anforderung", "Empfehlung"],
+        ["Subscription", "Management Group", "Inhalt", "Warum eigene Subscription"],
         [
-            ["Pilot / Start",        "1 Subscription – alle Plattformrollen",       "EA / MCA / Pay-as-you-go", "Sofort starten"],
-            ["Produktionsbetrieb",   "4 dedizierte Platform-Subscriptions",          "EA / MCA",                 "Nach Pilot"],
-            ["Workload-Skalierung",  "Je Workload eigene Sub in Corp/Online/Local",  "EA / MCA",                 "Bei Bedarf"],
+            ["Connectivity",
+             "alz-platform-connectivity",
+             "Hub-VNet, Azure Firewall, Log Analytics, Private DNS Zones",
+             "Netzwerk-Infrastruktur ist getrennt von Workloads. Workload-Teams haben keinen Zugriff auf Firewall oder Logging."],
+            ["Produktion",
+             "alz-landingzones-corp",
+             "Erste Workload-VNets (Spokes), Produktionsressourcen",
+             "Eigenes Budget, eigene RBAC, strengste Policies. Klare Trennung von Sandbox."],
+            ["Sandbox",
+             "alz-sandbox",
+             "Entwicklung, Tests, Experimente",
+             "Gelockerte Policies ermöglichen freies Ausprobieren ohne Risiko für Produktionsdaten."],
         ],
-        col_widths=[1.4, 2.8, 1.8, 1.2]
+        col_widths=[1.3, 2.0, 2.0, 2.7]
     )
+    add_body(doc, "Skalierung bei Bedarf:")
+    add_bullet(doc, "Weitere Produktions-Subscriptions → in alz-landingzones-corp einhängen; alle Policies greifen automatisch")
+    add_bullet(doc, "Internet-facing Workloads → neue MG alz-landingzones-online + Subscription hinzufügen")
+    add_bullet(doc, "Dediziertes Identity-Management → alz-platform-identity MG + Subscription bei Bedarf")
     p = doc.add_paragraph(style="Standard klein")
     p.add_run(
         "Hinweis: Kein Free-Tier-Account. "
@@ -449,8 +457,8 @@ def build():
 
     doc.add_heading("3.3 Namens- und Regionskonzept", level=2)
     add_body(doc,
-        "Primärregion: Germany West Central (germanywestcentral). "
-        "Sekundärregion: North Europe (northeurope). "
+        "Region: Germany West Central (germanywestcentral) – einzige aktive Region. "
+        "Datenresidenz innerhalb Deutschlands. Eine Sekundärregion ist nicht Teil des Minimalsetups. "
         "Die Namensvergabe folgt dem Microsoft-Standard ohne Präfix oder Postfix."
     )
     add_table(doc,
@@ -460,8 +468,7 @@ def build():
             ["Resource Groups",         "rg-alz-<zweck>-<region>"],
             ["Logging",                 "law-alz-<region>, mi-alz-<region>, dcr-*-alz-<region>"],
             ["Netzwerk-Ressourcen",     "vnet-alz-hub-<region>, afw-alz-<region>, bas-alz-<region>"],
-            ["Hub-VNet Primär",         "10.0.0.0/22 (Germany West Central)"],
-            ["Hub-VNet Sekundär",       "10.1.0.0/22 (North Europe)"],
+            ["Hub-VNet",                "10.0.0.0/22 (Germany West Central)"],
             ["Spoke-Netz (Beispiel)",   "10.2.0.0/24 (überlappungsfrei zu Hubs und On-Premises)"],
         ],
         col_widths=[2.0, 5.0]
@@ -505,20 +512,21 @@ def build():
         ["Management Group", "Assignments", "Repräsentative Beispiele"],
         [
             ["alz (Intermediate Root)",   "17", "Deploy-MDFC-Config-H224, Deploy-MDEndpoints, Deploy-AzActivity-Log, Enforce-ACSB"],
-            ["alz-landingzones",           "53", "Deny-Storage-http, Deny-MgmtPorts-Internet, Deploy-VM-Monitoring, Enforce-Guardrails-*"],
-            ["alz-landingzones-corp",      "5",  "Deny-Public-Endpoints, Deny-Public-IP-On-NIC, Deny-HybridNetworking, Deploy-Private-DNS-Zones"],
-            ["alz-landingzones-online",    "0",  "(erbt von landingzones)"],
-            ["alz-landingzones-local",     "1",  "Enforce-ALDO-Services"],
             ["alz-platform",               "40", "Deploy-VM-Monitoring, Enforce-Backup, Enforce-Guardrails-*, DenyAction-DeleteUAMIAMA"],
             ["alz-platform-connectivity",  "1",  "Enable-DDoS-VNET"],
-            ["alz-platform-identity",      "4",  "Deny-MgmtPorts-Internet, Deny-Public-IP, Deny-Subnet-Without-Nsg, Deploy-VM-Backup"],
-            ["alz-platform-management",    "0",  "(erbt von platform)"],
-            ["alz-platform-security",      "0",  "(erbt von platform)"],
+            ["alz-landingzones",           "53", "Deny-Storage-http, Deny-MgmtPorts-Internet, Deploy-VM-Monitoring, Enforce-Guardrails-*"],
+            ["alz-landingzones-corp",      "5",  "Deny-Public-Endpoints, Deny-Public-IP-On-NIC, Deny-HybridNetworking, Deploy-Private-DNS-Zones"],
             ["alz-sandbox",                "1",  "Enforce-ALZ-Sandbox"],
             ["alz-decommissioned",         "1",  "Enforce-ALZ-Decomm"],
-            ["Summe",                      "123", ""],
+            ["Summe (aktive MGs)",         "118", ""],
         ],
         col_widths=[2.3, 0.9, 3.8]
+    )
+    p = doc.add_paragraph(style="Standard klein")
+    p.add_run(
+        "Hinweis: Die 5 nicht verwendeten MGs (identity, management, security, online, local) "
+        "entfallen im Minimalsetup. Die zugehörigen 5 Assignments (Enforce-ALDO-Services, "
+        "4× identity-spezifische Policies) werden erst relevant wenn diese MGs hinzugefügt werden."
     )
 
     doc.add_heading("4.2 DoNotEnforce-Modus für sanftes Onboarding", level=2)
@@ -652,88 +660,42 @@ def build():
 
     doc.add_heading("5.5 Bechtle-Empfehlung: ~€1.050/Monat-Konfiguration", level=2)
     add_body(doc,
-        "Durch drei gezielte Anpassungen reduziert sich der monatliche Basispreis von "
-        "~€5.800 auf ~€1.050 – ohne den Funktionsumfang der Landing Zone einzuschränken. "
-        "Alle Governance-Objekte (MGs, Policies, RBAC), das Logging-Framework und "
-        "die vollständige Hub-and-Spoke-Topologie mit zentraler Firewall bleiben erhalten."
+        "Das Kunden-Minimalsetup reduziert den monatlichen Basispreis von ~€5.800 (Microsoft-Default) "
+        "auf ~€765 – ohne die Netzwerksegmentierung oder den Governance-Umfang zu reduzieren. "
+        "Jede zurückgestellte Komponente ist per Parameterschalter aktivierbar, nichts ist gelöscht."
     )
     add_table(doc,
-        ["Anpassung", "Microsoft-Default", "Bechtle-Empfehlung", "Ersparnis"],
+        ["Dienst", "Status", "Kosten/Monat", "Begründung"],
         [
-            ["Azure Firewall SKU",
-             "Premium × 2 Regionen (~€2.200)",
-             "Standard × 1 Region (~€700)",
-             "~€1.500"],
-            ["DDoS Network Protection",
-             "AN (~€2.500/Monat)",
-             "AUS – bei internet-facing Workloads aktivieren",
-             "~€2.500"],
-            ["ExpressRoute Gateway",
-             "AN × 2 Regionen (~€560)",
-             "AUS – bei ER-Leitung aktivieren",
-             "~€560"],
-            ["VPN Gateway",
-             "AN × 2 Regionen (~€280)",
-             "AN × 1 Region (~€140)",
-             "~€140"],
-            ["Azure Bastion",
-             "AN × 2 Regionen (~€240)",
-             "AN × 1 Region (~€120)",
-             "~€120"],
-            ["DNS Private Resolver",
-             "AN × 2 Regionen (~€50)",
-             "AN × 1 Region (~€25)",
-             "~€25"],
-            ["Netzwerk gesamt",
-             "~€5.800",
-             "~€1.050",
-             "~€4.750"],
+            ["Azure Firewall Standard",  "Aktiv",          "~€700",  "Netzwerksegmentierung – zwingend erforderlich"],
+            ["Private DNS Zones",        "Aktiv",          "~€15",   "PaaS-Dienste ohne öffentliche Endpunkte"],
+            ["Log Analytics Workspace",  "Aktiv",          "~€50",   "Zentrales Logging – Compliance-Anforderung"],
+            ["Azure Bastion",            "Zurückgestellt", "€0",     "Kunde nutzt eigenen On-Prem-Gateway; RDP/SSH über VPN-Tunnel"],
+            ["VPN Gateway",              "Zurückgestellt", "€0",     "Aktivieren wenn On-Prem-Anbindung konkret geplant"],
+            ["ExpressRoute Gateway",     "Zurückgestellt", "€0",     "Erst bei bestellter ER-Leitung relevant"],
+            ["DDoS Protection",          "Zurückgestellt", "€0",     "Erst bei internet-facing Workloads mit öffentlichen IPs"],
+            ["DNS Private Resolver",     "Zurückgestellt", "€0",     "Erst relevant wenn VPN aktiv und On-Prem-DNS-Auflösung benötigt"],
+            ["Firewall Premium",         "Zurückgestellt", "€0",     "In-Place-Upgrade möglich; erst bei IDPS/TLS-Bedarf"],
+            ["Gesamt",                   "–",              "~€765",  ""],
         ],
-        col_widths=[2.0, 1.9, 2.1, 1.0]
+        col_widths=[1.9, 1.2, 0.9, 3.0]
     )
-    add_body(doc,
-        "Was bleibt vollständig erhalten:"
-    )
-    add_bullet(doc, "Alle 149 Policy-Definitionen, 42 Initiativen, 123 Assignments – voller Governance-Umfang")
-    add_bullet(doc, "Hub-and-Spoke-Topologie mit zentraler Azure Firewall (Datenverkehr-Inspektion, FQDN-Filterung, Threat Intelligence)")
-    add_bullet(doc, "Azure Bastion für sicheres RDP/SSH ohne öffentliche IPs")
-    add_bullet(doc, "VPN Gateway für On-Premises-Konnektivität (BGP, active-active, ASN 65515)")
-    add_bullet(doc, "Private DNS Zones + DNS Private Resolver für hybride Namensauflösung")
-    add_bullet(doc, "Zentrales Logging (Log Analytics, DCRs, DINE-Policies)")
-    add_bullet(doc, "Alle 5 Custom RBAC-Rollen und 18 Deploy-Stufen")
+    add_body(doc, "Was aktiv bleibt und warum:")
+    add_bullet(doc, "Azure Firewall Standard: zentraler Punkt für Netzwerksegmentierung und Datenverkehrskontrolle – nicht verhandelbar")
+    add_bullet(doc, "Alle 149 Policy-Definitionen, 42 Initiativen, 118 Assignments (aktive MGs) – voller Governance-Umfang")
+    add_bullet(doc, "Hub-and-Spoke-Topologie: alle Spoke-VNets laufen durch die zentrale Firewall")
+    add_bullet(doc, "Zentrales Logging (Log Analytics, DCRs) – Voraussetzung für Compliance und Betrieb")
+    add_bullet(doc, "Private DNS Zones – PaaS-Dienste sind ohne öffentliche IPs erreichbar")
 
-    add_body(doc, "Was vorläufig zurückgestellt wird (nicht gestrichen):")
-    add_bullet(doc,
-        "Sekundäre Region (North Europe): Deployment auf Primärregion beschränkt; "
-        "Ausbau auf zwei Regionen bei Bedarf jederzeit möglich",
-        "Zweite Region"
-    )
-    add_bullet(doc,
-        "Azure Firewall Premium: Standard → Premium-Upgrade ist unterbrechungsfrei möglich; "
-        "Premium-Features (IDPS, TLS-Inspektion, URL-Filterung) bei konkretem Bedarf aktivieren",
-        "Firewall Premium"
-    )
-    add_bullet(doc,
-        "DDoS Network Protection: erst sinnvoll bei internet-facing Workloads mit öffentlichen IPs; "
-        "kann per einzelnem Schalter (deployDdosProtectionPlan: true) nachträglich aktiviert werden",
-        "DDoS Protection"
-    )
-    add_bullet(doc,
-        "ExpressRoute Gateway: erst bei bestellter ER-Leitung relevant; "
-        "VPN Gateway übernimmt in der Zwischenzeit die On-Prem-Anbindung",
-        "ExpressRoute"
-    )
-
-    add_body(doc, "Bicep-Parameter für die Bechtle-Empfehlung (in templates/networking/hubnetworking/main.bicepparam):")
+    add_body(doc, "Bicep-Parameter für das Kunden-Minimalsetup:")
     code_p = doc.add_paragraph(style="Normal")
     code_r = code_p.add_run(
         "azureFirewallSettings:        { deployAzureFirewall: true, azureFirewallTier: 'Standard' }\n"
-        "bastionHostSettings:          { deployBastion: true }\n"
-        "vpnGatewaySettings:           { deployVpnGateway: true }\n"
-        "expressRouteGatewaySettings:  { deployExpressRouteGateway: false }  // bei Bedarf: true\n"
-        "ddosProtectionPlanSettings:   { deployDdosProtectionPlan: false }   // bei Bedarf: true\n"
-        "privateDnsSettings:           { deployPrivateDnsZones: true, deployDnsPrivateResolver: true }\n"
-        "// Sekundär-Hub (northeurope): Deployment-Stufe 17 für zweite Region nicht ausführen"
+        "bastionHostSettings:          { deployBastion: false }       // Aktivieren: true\n"
+        "vpnGatewaySettings:           { deployVpnGateway: false }    // Aktivieren wenn On-Prem geplant\n"
+        "expressRouteGatewaySettings:  { deployExpressRouteGateway: false }\n"
+        "ddosProtectionPlanSettings:   { deployDdosProtectionPlan: false }\n"
+        "privateDnsSettings:           { deployPrivateDnsZones: true, deployDnsPrivateResolver: false }"
     )
     code_r.font.name = "Courier New"
     code_r.font.size = Pt(8)
@@ -741,9 +703,9 @@ def build():
 
     p = doc.add_paragraph(style="Standard klein")
     p.add_run(
-        "Hinweis: Der Wechsel von Firewall Standard auf Premium ist ein In-Place-Upgrade "
-        "ohne Neukonfiguration der Firewall-Regeln. Der Wechsel von einer auf zwei Regionen "
-        "erfordert einen weiteren Bootstrap-Lauf mit aktualisierter Regionskonfiguration."
+        "Hinweis: Bastion ist zurückgestellt weil der Kunde über seinen eigenen On-Prem-Gateway "
+        "via VPN-Tunnel auf Azure VMs zugreift. Sobald VPN aktiviert ist, ist kein separates "
+        "Bastion erforderlich. Upgrade Firewall Standard → Premium: unterbrechungsfrei (In-Place)."
     )
     doc.add_page_break()
 
@@ -917,57 +879,57 @@ def build():
     add_body(doc,
         "Die Kosten der Azure Landing Zone werden primär durch die Netzwerk-Dienste "
         "bestimmt. Governance-Objekte (MGs, Policies, RBAC), Logging und "
-        "Identity-Ressourcen sind nahezu kostenlos. Bechtle empfiehlt eine "
-        "zielgerichtete Konfiguration mit ~€1.050/Monat, die alle wesentlichen "
-        "Funktionen enthält und durch nachträgliche Schalter auf den vollen "
-        "Microsoft-Standard (~€5.800/Monat) erweiterbar ist."
+        "Identity-Ressourcen sind nahezu kostenlos. Das Kunden-Minimalsetup startet "
+        "bei ~€765/Monat – mit vollständiger Netzwerksegmentierung und Governance, "
+        "aber ohne Komponenten die erst bei konkretem Bedarf relevant werden."
     )
 
     doc.add_heading("10.1 Kostenvergleich: Varianten im Überblick", level=2)
     add_table(doc,
-        ["Dienst / Komponente", "Microsoft-Default", "Bechtle-Empfehlung (~€1.050)", "Pilot (€0)"],
+        ["Dienst / Komponente", "Microsoft-Default", "Bechtle-Standard (~€1.050)", "Kunden-Minimal (~€765)", "Pilot (€0)"],
         [
-            ["Azure Firewall",              "2x Premium ~€2.200", "1x Standard ~€700",   "–"],
-            ["DDoS Network Protection",     "~€2.500",            "–",                    "–"],
-            ["ExpressRoute Gateway",        "2x ~€560",           "–",                    "–"],
-            ["VPN Gateway",                 "2x ~€280",           "1x ~€140",             "–"],
+            ["Azure Firewall",              "2x Premium ~€2.200", "1x Standard ~€700",  "1x Standard ~€700",  "–"],
+            ["DDoS Network Protection",     "~€2.500",            "–",                   "–",                  "–"],
+            ["ExpressRoute Gateway",        "2x ~€560",           "–",                   "–",                  "–"],
+            ["VPN Gateway",                 "2x ~€280",           "1x ~€140",            "– (zurückgest.)",    "–"],
             ["Azure Bastion",               "2x ~€240",           "1x ~€120",             "–"],
-            ["DNS Private Resolver",        "2x ~€50",            "1x ~€25",              "–"],
-            ["Private DNS Zones",           "~€15",               "~€15",                 "–"],
-            ["Log Analytics Workspace",     "~€50",               "~€50",                 "~€50"],
-            ["MGs / Policies / RBAC",       "€0",                 "€0",                   "€0"],
-            ["Gesamt",                      "~€5.800",            "~€1.050",              "ca. €50"],
-            ["Regionen",                    "GWC + NE (beide)",   "GWC (Primär)",         "GWC"],
-            ["Netzwerk-Typ",                "hubNetworking",      "hubNetworking",        "none"],
+            ["DNS Private Resolver",        "2x ~€50",            "1x ~€25",             "– (zurückgest.)",   "–"],
+            ["Private DNS Zones",           "~€15",               "~€15",                "~€15",              "–"],
+            ["Azure Bastion",               "2x ~€240",           "1x ~€120",            "– (zurückgest.)",   "–"],
+            ["Log Analytics Workspace",     "~€50",               "~€50",                "~€50",              "~€50"],
+            ["MGs / Policies / RBAC",       "€0",                 "€0",                  "€0",                "€0"],
+            ["Gesamt",                      "~€5.800",            "~€1.050",             "~€765",             "ca. €50"],
+            ["Regionen",                    "GWC + NE (beide)",   "GWC",                 "GWC",               "GWC"],
+            ["Netzwerk-Typ",                "hubNetworking",      "hubNetworking",       "hubNetworking",     "none"],
         ],
-        col_widths=[2.1, 1.6, 2.0, 1.3]
+        col_widths=[1.9, 1.4, 1.5, 1.4, 1.0]
     )
 
-    doc.add_heading("10.2 Bechtle-Empfehlung: ~€1.050/Monat", level=2)
+    doc.add_heading("10.2 Kunden-Minimalsetup: ~€765/Monat", level=2)
     add_body(doc,
-        "Die Bechtle-Konfiguration stellt alle produktionsrelevanten Netzwerk- und "
-        "Sicherheitsdienste in der Primärregion (Germany West Central) bereit. "
-        "Kein Funktionsverlust gegenüber dem Microsoft-Default – lediglich "
-        "Dienste, die erst bei konkretem Bedarf relevant werden, sind initial deaktiviert."
+        "Das Kunden-Minimalsetup aktiviert nur was zum Start konkret benötigt wird. "
+        "Netzwerksegmentierung und Governance bleiben vollständig erhalten. "
+        "Bastion und VPN Gateway werden zurückgestellt – der Kunde nutzt seinen "
+        "eigenen On-Prem-Gateway für sicheren VM-Zugriff über VPN-Tunnel."
     )
     add_table(doc,
         ["Funktion", "Status", "Aktivierbar durch"],
         [
-            ["Management Groups (12 MGs)",              "Aktiv", "–"],
-            ["Policy-Set (149 Defs / 123 Assignments)", "Aktiv", "–"],
+            ["Management Groups (8 MGs)",               "Aktiv", "–"],
+            ["Policy-Set (149 Defs / 118 Assignments)", "Aktiv", "–"],
             ["Zentrales Logging (LAW + 3 DCRs)",        "Aktiv", "–"],
             ["Hub-and-Spoke-Topologie",                 "Aktiv", "–"],
-            ["Azure Firewall (Standard, 1 Region)",     "Aktiv", "–"],
-            ["Azure Bastion (1 Region)",                "Aktiv", "–"],
-            ["VPN Gateway (1 Region)",                  "Aktiv", "–"],
+            ["Azure Firewall Standard (GWC)",           "Aktiv", "–"],
             ["Private DNS Zones",                       "Aktiv", "–"],
-            ["DNS Private Resolver (1 Region)",         "Aktiv", "–"],
-            ["Firewall Premium (IDPS, TLS)",      "Zurückgestellt", "azureFirewallTier: Premium (In-Place-Upgrade, kein Rebuild)"],
-            ["DDoS Network Protection",           "Zurückgestellt", "deployDdosProtectionPlan: true (bei internet-facing Workloads)"],
-            ["ExpressRoute Gateway",              "Zurückgestellt", "deployExpressRouteGateway: true (bei ER-Leitungsbestellung)"],
-            ["Sekundäre Region (optional)",  "Zurückgestellt", "Zweiten Hub-Deployment-Lauf ausführen"],
+            ["Azure Bastion",              "Zurückgestellt", "deployBastion: true (wenn kein VPN-Tunnel vorhanden)"],
+            ["VPN Gateway",               "Zurückgestellt", "deployVpnGateway: true (wenn On-Prem-Anbindung geplant)"],
+            ["DNS Private Resolver",      "Zurückgestellt", "deployDnsPrivateResolver: true (nach VPN-Aktivierung)"],
+            ["Firewall Premium (IDPS)",   "Zurückgestellt", "azureFirewallTier: Premium (In-Place-Upgrade, kein Rebuild)"],
+            ["DDoS Network Protection",   "Zurückgestellt", "deployDdosProtectionPlan: true (bei internet-facing Workloads)"],
+            ["ExpressRoute Gateway",      "Zurückgestellt", "deployExpressRouteGateway: true (bei ER-Leitungsbestellung)"],
+            ["Sekundäre Region",          "Zurückgestellt", "Zweiten Hub-Deployment-Lauf ausführen"],
         ],
-        col_widths=[2.6, 0.8, 3.6]
+        col_widths=[2.6, 0.9, 3.5]
     )
 
     doc.add_heading("10.3 Gestufter Ausbau", level=2)
@@ -976,25 +938,29 @@ def build():
         [
             ["1 – Governance-Pilot",
              "network_type: none",
-             "ca. €50 (nur LAW)",
+             "ca. €50",
              "Sofort – MGs, Policies, Logging, kein Kostenrisiko"],
-            ["2 – Bechtle-Empfehlung",
-             "Firewall Standard, 1 Region, kein DDoS/ER",
+            ["2 – Kunden-Minimal",
+             "Firewall Standard, 1 Region, kein Bastion/VPN/DDoS",
+             "~€765",
+             "Erste Workloads; Kunde nutzt eigenen Gateway für VM-Zugriff"],
+            ["3 – Mit VPN + Bastion",
+             "+ deployVpnGateway: true, deployBastion: true",
              "~€1.050",
-             "Erste Workloads; On-Prem-Anbindung geplant"],
-            ["3 – Geo-Redundanz",
-             "+ Sekundär-Hub (optional)",
+             "On-Prem-Anbindung konkret geplant oder Bastion gewünscht"],
+            ["4 – Geo-Redundanz",
+             "+ Sekundär-Hub GWC",
              "~€1.800",
              "SLA-Anforderungen erfordern zweite Region"],
-            ["4 – Firewall Premium",
+            ["5 – Firewall Premium",
              "azureFirewallTier: Premium",
              "~€2.400",
              "IDPS / TLS-Inspektion / URL-Filterung benötigt"],
-            ["5 – DDoS Protection",
+            ["6 – DDoS Protection",
              "deployDdosProtectionPlan: true",
              "~€4.900",
              "Internet-facing Workloads mit DDoS-Risiko"],
-            ["6 – Microsoft-Default",
+            ["7 – Microsoft-Default",
              "Alle Dienste, beide Regionen",
              "~€5.800",
              "Vollständiger Enterprise-Standard"],
@@ -1022,11 +988,11 @@ def build():
              "+ Nullrisiko\n+ Vollständige Governance (MGs, Policies, Logging)\n+ Ideal für PoC und Compliance-Audit",
              "– Keine Netzwerkkonnektivität\n– Workloads können nicht deployt werden\n– Kein Firewall-/Bastion-Schutz",
              "Einstieg, PoC, Compliance-Audit ohne Netzwerkbedarf"],
-            ["Bechtle-Empfehlung\n(Standard, 1 Region)",
-             "~€1.050",
-             "+ Voller Funktionsumfang\n+ Firewall, Bastion, VPN, DNS aktiv\n+ 4× günstiger als Microsoft-Default\n+ In-Place-Upgrade auf Premium möglich",
-             "– Keine zweite Region (kein Geo-Failover)\n– Kein IDPS / TLS-Inspektion\n– Kein DDoS-Schutz",
-             "Standard-Produktionsumgebungen, erste Workloads"],
+            ["Kunden-Minimal\n(Standard, 1 Region,\nkein Bastion/VPN)",
+             "~€765",
+             "+ Netzwerksegmentierung aktiv\n+ Volle Governance und Logging\n+ 7× günstiger als Microsoft-Default\n+ Jede Komponente per Schalter aktivierbar",
+             "– Kein Bastion (VM-Zugriff via On-Prem-Gateway)\n– Kein VPN Gateway (bis On-Prem konkret geplant)\n– Kein IDPS / TLS-Inspektion\n– Kein DDoS-Schutz",
+             "Minimaler Einstieg; Kunde hat eigenen Gateway für VM-Zugriff"],
             ["Geo-Redundanz\n(+ Hub North Europe)",
              "~€1.800",
              "+ Regionale Ausfallsicherheit\n+ Zwei unabhängige Netzwerkhubs\n+ Automatisches Routing-Failover",
@@ -1195,9 +1161,9 @@ def build():
     add_table(doc,
         ["Entscheidung", "Optionen", "Bechtle-Empfehlung"],
         [
-            ["Subscription-Modell",       "1 Sub vs. 4 Platform-Subs",                    "1 Sub für Start; Trennung später"],
-            ["Primärregion",              "Germany West Central bestätigen oder ändern",   "GWC (Datenresidenz Deutschland)"],
-            ["Netzwerk-Typ für Pilot",    "none (€0) vs. hubNetworking (~€5.800)",         "none für Pilot"],
+            ["Subscription-Modell",       "✔ Entschieden: Connectivity, Produktion, Sandbox", "3 dedizierte Subscriptions sofort"],
+            ["Primärregion",              "✔ Entschieden: Germany West Central",             "GWC (Datenresidenz Deutschland)"],
+            ["Netzwerk-Typ für Pilot",    "none (€0) vs. hubNetworking (~€5.800)",          "none für Pilot"],
             ["DDoS Protection",           "An (~€2.500/Monat) vs. Aus",                    "Aus für Start; nach Internet-Workloads prüfen"],
             ["Enforcement-Zeitpunkt",     "Wann von DoNotEnforce auf Enabled",             "Nach 4–8 Wochen Audit-Phase"],
             ["On-Prem-Anbindung",         "VPN vs. ExpressRoute vs. keins",               "Nach Bandbreiten-/SLA-Anforderung"],
@@ -1263,7 +1229,7 @@ def build():
             ["2", "Azure Subscription bereitstellen (EA/MCA/PAYG, kein Free Tier)",                         "Kunde",         "1 Stunde"],
             ["3", "GitHub PAT (Classic) mit Scopes repo, workflow, admin:org erstellen",                     "Kunde",         "30 Min."],
             ["4", "Erhöhten Zugriff am Tenant Root aktivieren (Entra ID → Properties)",                     "Kunde / Admin", "10 Min."],
-            ["5", "IP-Adressplan festlegen (Hub-Bereiche 10.0.0.0/22, 10.1.0.0/22 prüfen / anpassen)",    "Beide",         "½–1 Tag"],
+            ["5", "IP-Adressplan festlegen (Hub 10.0.0.0/22 auf Überschneidung mit On-Prem prüfen)",       "Beide",         "½–1 Tag"],
             ["6", "Entscheidungsprotokoll ausfüllen: Region, network_type, DDoS, Enforcement-Zeitpunkt",   "Beide",         "½ Tag"],
         ],
         col_widths=[0.3, 3.5, 1.2, 0.8]
