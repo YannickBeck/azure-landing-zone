@@ -194,14 +194,14 @@ def build():
     )
     add_body(doc, "Die vier Kernnutzen im Überblick:")
     add_bullet(doc,
-        "149 Policy-Definitionen, 42 Initiativen und 123 konkrete Richtlinien-Zuweisungen "
+        "149 Policy-Definitionen, 42 Initiativen und 118 konkrete Richtlinien-Zuweisungen "
         "sorgen für automatisierte Leitplanken (Guardrails) auf allen Verwaltungsebenen – "
         "von Sicherheitsanforderungen bis zur Ressourcen-Klassifizierung.",
         "Governance und Policies"
     )
     add_bullet(doc,
-        "Ein zentrales Hub-and-Spoke-Netzwerk (Azure Firewall, Bastion, Private DNS, "
-        "optionale VPN/ExpressRoute-Anbindung) stellt sichere Konnektivität für alle "
+        "Ein zentrales Hub-and-Spoke-Netzwerk (Azure Firewall, Private DNS, "
+        "optionale VPN/ExpressRoute/Bastion-Anbindung) stellt sichere Konnektivität für alle "
         "Workloads bereit.",
         "Netzwerk-Hub"
     )
@@ -254,7 +254,7 @@ def build():
         "Das Zielbild ist eine standardisierte, mandantenweite Azure-Grundstruktur "
         "als stabiles Fundament für alle künftigen Workloads:"
     )
-    add_bullet(doc, "Management-Group-Hierarchie (12 MGs) als strukturierter Verwaltungsrahmen für alle Subscriptions")
+    add_bullet(doc, "Management-Group-Hierarchie (8 MGs) als strukturierter Verwaltungsrahmen für alle Subscriptions")
     add_bullet(doc, "Vollständiges ALZ-Policy-Set für automatische Governance-Durchsetzung ohne manuelle Eingriffe je Workload")
     add_bullet(doc, "Zentrales Logging und Monitoring als einheitlicher Sicherheits- und Betriebs-Backbone")
     add_bullet(doc, "Hub-and-Spoke-Netzwerk für sichere, private Konnektivität zwischen Workloads und On-Premises")
@@ -273,9 +273,9 @@ def build():
         ["Erfolgskriterium", "Messgröße / Nachweis"],
         [
             ["Management-Group-Hierarchie steht",
-             "12 MGs im Azure Portal sichtbar, Tenant Root → alz → Unterebenen"],
+             "8 MGs im Azure Portal sichtbar, Tenant Root → alz → Unterebenen"],
             ["Policies greifen",
-             "123 Assignments aktiv; Azure Policy Compliance-Report zeigt Ergebnisse"],
+             "118 Assignments aktiv; Azure Policy Compliance-Report zeigt Ergebnisse"],
             ["Zentrales Logging aktiv",
              "Log Analytics Workspace vorhanden; Activity Logs aller Subscriptions fließen ein"],
             ["Netzwerk-Hub bereit",
@@ -307,7 +307,7 @@ def build():
         "Wartbarkeit"
     )
     add_bullet(doc,
-        "Vollständiges Policy-Set: 149 Definitionen, 42 Initiativen, 123 Assignments – "
+        "Vollständiges Policy-Set: 149 Definitionen, 42 Initiativen, 118 Assignments – "
         "automatisch aus der öffentlichen Microsoft Container Registry (MCR) bezogen",
         "Policy-Set"
     )
@@ -455,7 +455,7 @@ def build():
     add_table(doc,
         ["Element", "Konvention / Bereich"],
         [
-            ["Management Groups",       "alz, alz-platform, alz-platform-{connectivity,identity,management,security}, alz-landingzones, …"],
+            ["Management Groups",       "alz, alz-platform, alz-platform-connectivity, alz-landingzones, alz-landingzones-corp, alz-sandbox, alz-decommissioned"],
             ["Resource Groups",         "rg-alz-<zweck>-<region>"],
             ["Logging",                 "law-alz-<region>, mi-alz-<region>, dcr-*-alz-<region>"],
             ["Netzwerk-Ressourcen",     "vnet-alz-hub-<region>, afw-alz-<region>, bas-alz-<region>"],
@@ -477,6 +477,13 @@ def build():
         "bezogen über avm/ptn/alz/empty:0.3.6. Statt eines schlanken Eigenbau-Sets "
         "wird das vollständige, von Microsoft gepflegte Policy-Framework ausgerollt."
     )
+    p = doc.add_paragraph(style="Standard klein")
+    run = p.add_run(
+        "▶ Vollständige Referenz: Alle 8 Management Groups, 149 Policy-Definitionen, 42 Initiativen, "
+        "118 Assignments, 5 RBAC-Rollen und 22 Bicep-Module sind konkret und namentlich dokumentiert in: "
+        "Azure-Landing-Zone-ALZ-Referenz.docx"
+    )
+    run.bold = True
     add_table(doc,
         ["Komponente", "Anzahl", "Beschreibung"],
         [
@@ -484,8 +491,8 @@ def build():
              "Monitoring (55), Network (20), Storage (16), SQL (13), Guardrails je Dienst …"],
             ["Policy-Set-Definitionen (Initiativen)", "42",
              "Deploy-MDFC-Config, Deploy-Private-DNS-Zones, Enforce-Guardrails-* je Dienst, Enforce-ACSB …"],
-            ["Policy-Assignments", "123",
-             "Direkt zugewiesen auf 9 MG-Ebenen; Kind-MGs erben zusätzlich"],
+            ["Policy-Assignments", "118",
+             "Direkt zugewiesen auf 7 MG-Ebenen; Kind-MGs erben zusätzlich"],
             ["Custom RBAC-Rollen", "5",
              "Subscription-Owner, Security-Operations, Network-Management, Application-Owners, Network-Subnet-Contributor"],
         ],
@@ -570,31 +577,36 @@ def build():
 
     doc.add_heading("5.2 Subnetze und Dienste", level=2)
     add_table(doc,
-        ["Subnetz", "Hub 1 Primär (GWC)", "Hub 2 Sekundär (NE)", "Zweck"],
+        ["Subnetz", "Adressbereich (GWC)", "Status", "Zweck"],
         [
-            ["AzureFirewallSubnet",               "10.0.0.0/26",     "10.1.0.0/26",     "Azure Firewall (Pflichtsubnetz)"],
-            ["AzureFirewallManagementSubnet",      "10.0.0.192/26",   "10.1.0.192/26",   "Firewall Management Traffic"],
-            ["AzureBastionSubnet",                 "10.0.0.64/26",    "10.1.0.64/26",    "Azure Bastion (sicheres RDP/SSH)"],
-            ["GatewaySubnet",                      "10.0.0.128/27",   "10.1.0.128/27",   "VPN-/ExpressRoute-Gateways"],
-            ["DNSPrivateResolverInboundSubnet",    "10.0.0.160/28",   "10.1.0.160/28",   "DNS Private Resolver Inbound"],
-            ["DNSPrivateResolverOutboundSubnet",   "10.0.0.176/28",   "10.1.0.176/28",   "DNS Private Resolver Outbound"],
+            ["AzureFirewallSubnet",              "10.0.0.0/26",    "Aktiv",          "Azure Firewall (Pflichtsubnetz)"],
+            ["AzureFirewallManagementSubnet",     "10.0.0.192/26",  "Aktiv",          "Firewall Management Traffic"],
+            ["AzureBastionSubnet",                "10.0.0.64/26",   "Zurückgestellt", "Azure Bastion – reserviert, deployBastion: false"],
+            ["GatewaySubnet",                     "10.0.0.128/27",  "Zurückgestellt", "VPN-/ExpressRoute-Gateway – reserviert, deployVpnGateway: false"],
+            ["DNSPrivateResolverInboundSubnet",   "10.0.0.160/28",  "Zurückgestellt", "DNS Private Resolver – reserviert, deployDnsPrivateResolver: false"],
+            ["DNSPrivateResolverOutboundSubnet",  "10.0.0.176/28",  "Zurückgestellt", "DNS Private Resolver – reserviert"],
         ],
-        col_widths=[2.4, 1.5, 1.5, 1.6]
+        col_widths=[2.4, 1.5, 1.2, 2.9]
+    )
+    p = doc.add_paragraph(style="Standard klein")
+    p.add_run(
+        "Alle Subnetze sind im Hub-VNet reserviert. Zurückgestellte Subnetze verursachen keine Kosten "
+        "und können per Parameterschalter aktiviert werden ohne das VNet neu zu erstellen."
     )
 
     add_table(doc,
-        ["Dienst", "Default", "Kosten/Monat (ca.)", "Schalter"],
+        ["Dienst", "Status (Kunden-Minimal)", "Kosten/Monat", "Schalter"],
         [
-            ["Azure Firewall Premium (je Hub)",          "AN (beide)",  "~€1.100/Hub",  "deployAzureFirewall"],
-            ["Azure Bastion (Standard)",                  "AN (beide)",  "~€120/Hub",    "deployBastion"],
-            ["VPN Gateway (VpnGw1AZ, BGP, ASN 65515)",   "AN (beide)",  "~€140/Hub",    "deployVpnGateway"],
-            ["ExpressRoute Gateway",                      "AN (beide)",  "~€280/Hub",    "deployExpressRouteGateway"],
-            ["DDoS Network Protection",                   "AN (Hub 1)",  "~€2.500",      "deployDdosProtectionPlan"],
-            ["Private DNS Zones (alle Azure-Zonen)",      "AN (beide)",  "~€15",         "deployPrivateDnsZones"],
-            ["DNS Private Resolver",                      "AN (beide)",  "~€25/Hub",     "deployDnsPrivateResolver"],
-            ["Gesamt Default",                            "–",           "~€5.800",      "network_type: none → €0"],
+            ["Azure Firewall Standard (GWC)",    "Aktiv",          "~€700",  "deployAzureFirewall"],
+            ["Private DNS Zones",                 "Aktiv",          "~€15",   "deployPrivateDnsZones"],
+            ["Azure Bastion",                     "Zurückgestellt", "€0",     "deployBastion: true (wenn kein VPN-Tunnel)"],
+            ["VPN Gateway (VpnGw1AZ, BGP)",       "Zurückgestellt", "€0",     "deployVpnGateway: true (bei On-Prem-Planung)"],
+            ["DNS Private Resolver",              "Zurückgestellt", "€0",     "deployDnsPrivateResolver: true (nach VPN)"],
+            ["ExpressRoute Gateway",              "Zurückgestellt", "€0",     "deployExpressRouteGateway: true"],
+            ["DDoS Network Protection",           "Zurückgestellt", "€0",     "deployDdosProtectionPlan: true"],
+            ["Gesamt Kunden-Minimal",             "–",              "~€765",  "Microsoft-Default: ~€5.800"],
         ],
-        col_widths=[2.5, 0.9, 1.4, 2.2]
+        col_widths=[2.3, 1.4, 0.9, 2.4]
     )
     p = doc.add_paragraph(style="Standard klein")
     p.add_run(
@@ -631,7 +643,7 @@ def build():
     add_bullet(doc, "Mögliche Folgestufe: Migration zu Virtual WAN bei Bedarf (Template liegt vor)")
     add_bullet(doc, "Abgrenzung: ExpressRoute/VPN-Konfiguration und IP-Adresskonzept On-Premises sind nicht Teil der Landing Zone")
 
-    doc.add_heading("5.5 Bechtle-Empfehlung: ~€1.050/Monat-Konfiguration", level=2)
+    doc.add_heading("5.5 Kunden-Minimalsetup: ~€765/Monat-Konfiguration", level=2)
     add_body(doc,
         "Durch drei gezielte Anpassungen reduziert sich der monatliche Basispreis von "
         "~€5.800 auf ~€1.050 – ohne den Funktionsumfang der Landing Zone einzuschränken. "
@@ -1032,63 +1044,61 @@ def build():
         col_widths=[1.5, 0.8, 2.3, 2.3, 1.7]
     )
 
-    doc.add_heading("Bechtle-Varianten: Drei Einsparstufen im Vergleich", level=2)
+    doc.add_heading("10.5 Ausbaustufen im Vergleich", level=2)
     add_body(doc,
-        "Innerhalb der Bechtle-Empfehlung gibt es drei konkrete Einsparstufen. "
-        "Option A ist die aktuelle Baseline. Option B ist vollständig ALZ-konform und "
-        "spart ~€280/Monat durch Reservierung und Verzicht auf das VPN Gateway bis zur "
-        "ersten on-premises-Anbindung. Option C erzielt den maximalen Einspareffekt, "
-        "bricht aber mit dem Microsoft ALZ Enterprise-Anspruch (bewusster Kompromiss)."
+        "Ausgehend vom Kunden-Minimalsetup (~€765) gibt es vier konkrete Ausbaustufen. "
+        "Option A ist das aktuelle Kunden-Setup. Option B fügt VPN Gateway und Bastion hinzu "
+        "sobald On-Prem-Anbindung konkret geplant wird. Option C (Firewall Basic) bricht "
+        "mit dem ALZ-Anspruch und wird nicht empfohlen."
     )
     add_table(doc,
         ["Option", "Kosten/Mon.", "ALZ-konform", "Differenz vs. A", "Einschränkung"],
         [
-            ["A – Bechtle-Standard\n(Baseline)",
-             "~€1.050",
+            ["A – Kunden-Minimal\n(aktuelles Setup)",
+             "~€765",
              "✔ Ja",
              "– (Referenz)",
-             "Keine – voller Funktionsumfang, VPN sofort verfügbar"],
-            ["B – Bechtle-Optimiert\n(VPN deferred +\n1-J.-Reservation FW)",
-             "~€770",
+             "Kein Bastion, kein VPN – Zugriff via On-Prem-Gateway. "
+             "Alle zurückgestellten Dienste per Schalter aktivierbar."],
+            ["B – Mit VPN + Bastion\n(On-Prem aktiv)",
+             "~€1.050",
              "✔ Ja",
-             "−€280/Mon.\n(26 % günstiger)",
-             "VPN Gateway erst deployen wenn on-prem-Anbindung konkret geplant.\n"
-             "1-Jahres-Bindung auf Firewall (Preisbindung, kein Architektur-Eingriff)."],
-            ["C – Bechtle-Budget\n(Firewall Basic,\nVPN deferred)\n⚠ ALZ-Bruch",
+             "+€285/Mon.",
+             "deployVpnGateway: true, deployBastion: true. "
+             "Aktivieren wenn On-Prem-Anbindung konkret geplant oder "
+             "VM-Zugriff ohne eigenen Gateway benötigt wird."],
+            ["C – Budget\n(Firewall Basic)\n⚠ ALZ-Bruch",
              "~€500",
              "✘ Nein",
-             "−€550/Mon.\n(52 % günstiger)",
-             "Firewall Basic: keine Application Rules (kein FQDN-Egress-Filtering),\n"
-             "kein Threat Intelligence, kein Autoscaling.\n"
-             "Microsoft klassifiziert Basic ausdrücklich als 'not for enterprise'.\n"
-             "ALZ-Firewall-Policies mit App-Rules sind nicht kompatibel."],
-            ["D – Microsoft-Default\n(alle Dienste,\n2 Regionen)",
+             "−€265/Mon.",
+             "Firewall Basic: keine Application Rules, kein FQDN-Filtering, "
+             "kein Threat Intelligence. ALZ-Policies nicht kompatibel. "
+             "Microsoft: 'not for enterprise'. Nicht empfohlen."],
+            ["D – Microsoft-Default\n(alle Dienste, 2 Regionen)",
              "~€5.800",
              "✔ Ja\n(vollständig)",
-             "+€4.750/Mon.\n(452 % teurer)",
-             "Maximaler Enterprise-Standard – alle Komponenten aktiv:\n"
-             "Firewall Premium (2×), DDoS Plan, ExpressRoute GW (2×),\n"
-             "VPN GW (2×), Bastion (2×), DNS Resolver (2×).\n"
-             "Empfehlung von Microsoft für kritische Unternehmensumgebungen."],
+             "+€5.035/Mon.",
+             "Maximaler Enterprise-Standard: Firewall Premium (2×), DDoS, "
+             "ExpressRoute GW (2×), VPN GW (2×), Bastion (2×), DNS Resolver (2×)."],
         ],
         col_widths=[1.8, 0.9, 0.9, 1.2, 3.8]
     )
     add_table(doc,
-        ["Dienst", "Option A (~€1.050)", "Option B (~€770)", "Option C (~€500)", "Option D (~€5.800)"],
+        ["Dienst", "Option A (~€765)", "Option B (~€1.050)", "Option C (~€500)", "Option D (~€5.800)"],
         [
-            ["Azure Firewall",        "Standard 1×  ~€700",         "Standard 1× reserved  ~€560", "Basic 1×  ~€300",   "Premium 2×  ~€2.200"],
-            ["DDoS Protection",       "–",                           "–",                            "–",                 "Plan  ~€2.500"],
-            ["ExpressRoute GW",       "–",                           "–",                            "–",                 "2×  ~€560"],
-            ["VPN Gateway",           "1× aktiv  ~€140",             "Deferred  €0",                 "Deferred  €0",      "2×  ~€280"],
-            ["Azure Bastion",         "1×  ~€120",                   "1×  ~€120",                    "1×  ~€120",         "2×  ~€240"],
-            ["DNS Private Resolver",  "1×  ~€25",                    "1×  ~€25",                     "1×  ~€25",          "2×  ~€50"],
-            ["Private DNS Zones",     "~€15",                        "~€15",                         "~€15",              "~€15"],
-            ["Log Analytics",         "~€50",                        "~€50",                         "~€50",              "~€50"],
-            ["Regionen",              "GWC",                         "GWC",                          "GWC",               "GWC + NE"],
-            ["Gesamt",                "~€1.050",                     "~€770",                        "~€510",             "~€5.800"],
-            ["ALZ-konform",           "✔ Ja",                        "✔ Ja",                         "✘ Nein",            "✔ Ja (vollst.)"],
+            ["Azure Firewall",        "Standard ~€700",    "Standard ~€700",    "Basic ~€300",      "Premium 2× ~€2.200"],
+            ["DDoS Protection",       "–",                 "–",                 "–",                "Plan ~€2.500"],
+            ["ExpressRoute GW",       "–",                 "–",                 "–",                "2× ~€560"],
+            ["VPN Gateway",           "Zurückgest. €0",    "1× ~€140",          "Zurückgest. €0",   "2× ~€280"],
+            ["Azure Bastion",         "Zurückgest. €0",    "1× ~€120",          "Zurückgest. €0",   "2× ~€240"],
+            ["DNS Private Resolver",  "Zurückgest. €0",    "1× ~€25",           "Zurückgest. €0",   "2× ~€50"],
+            ["Private DNS Zones",     "~€15",              "~€15",              "~€15",             "~€15"],
+            ["Log Analytics",         "~€50",              "~€50",              "~€50",             "~€50"],
+            ["Regionen",              "GWC",               "GWC",               "GWC",              "GWC + NE"],
+            ["Gesamt",                "~€765",             "~€1.050",           "~€365",            "~€5.800"],
+            ["ALZ-konform",           "✔ Ja",              "✔ Ja",              "✘ Nein",           "✔ Ja (vollst.)"],
         ],
-        col_widths=[1.6, 1.6, 1.6, 1.3, 1.5]
+        col_widths=[1.6, 1.5, 1.5, 1.3, 1.7]
     )
 
     doc.add_page_break()
@@ -1370,7 +1380,7 @@ def build():
             ["learn.microsoft.com/azure/governance/policy/",        "Azure Policy Dokumentation"],
             ["learn.microsoft.com/azure/defender-for-cloud/",       "Microsoft Defender for Cloud Dokumentation"],
             ["docs/ACCELERATOR-BOOTSTRAP.md",                       "Lokales Runbook: Bootstrap- und Deployment-Schritte (Schritt-für-Schritt)"],
-            ["docs/TECHNICAL-REFERENCE.md",                         "Lokale Technische Referenz: alle 22 AVM-Module, 123 Assignments, 149 Policy-Definitionen"],
+            ["docs/TECHNICAL-REFERENCE.md",                         "Lokale Technische Referenz: alle 22 AVM-Module, 118 Assignments, 149 Policy-Definitionen"],
         ],
         col_widths=[2.8, 4.2]
     )
