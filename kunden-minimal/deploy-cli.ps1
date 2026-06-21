@@ -119,15 +119,7 @@ if ($DeploymentScope -in @("All", "ManagementGroups")) {
     ) -Silent
     Write-OK "alz-sandbox deployed"
 
-    Write-Step "1e) Decommissioned MG..."
-    Invoke-AzDeploy "alz-decomm-$ts" "tenant" @(
-        "deployment", "tenant", "create",
-        "--template-file", "$TemplatesRoot\core\governance\mgmt-groups\decommissioned\main.bicep",
-        "--parameters",   "$TemplatesRoot\core\governance\mgmt-groups\decommissioned\main.bicepparam"
-    ) -Silent
-    Write-OK "alz-decommissioned deployed"
-
-    Write-Step "1f) RBAC Role Assignments..."
+    Write-Step "1e) RBAC Role Assignments..."
     Invoke-AzDeploy "alz-rbac-$ts" "tenant" @(
         "deployment", "tenant", "create",
         "--template-file", "$TemplatesRoot\core\governance\rbac\main.bicep",

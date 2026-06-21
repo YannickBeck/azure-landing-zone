@@ -31,15 +31,14 @@ subscriptions:
     managementGroup: alz-sandbox
     inhalt: "Entwicklung, Tests, Experimente – gelockerte Policies"
 
-# Management Group Hierarchie (8 MGs – bewusst minimal)
+# Management Group Hierarchie (7 MGs – bewusst minimal)
 # Tenant Root (automatisch)
 # └── alz (Intermediate Root)
 #     ├── alz-platform
 #     │   └── alz-platform-connectivity   → Connectivity Sub
 #     ├── alz-landingzones
 #     │   └── alz-landingzones-corp       → Produktion Sub
-#     ├── alz-sandbox                     → Sandbox Sub
-#     └── alz-decommissioned              → Stilllegungszone
+#     └── alz-sandbox                     → Sandbox Sub
 #
 # Nicht verwendet (bei Bedarf ergänzen):
 #   alz-platform-identity    → eigene Identity-Subscription (AD DS, Entra Connect)
@@ -70,9 +69,6 @@ managementGroups:
     id: alz-sandbox
     displayName: "Sandbox"
     subscription: sandbox
-  decommissioned:
-    id: alz-decommissioned
-    displayName: "Decommissioned"
 
 # Logging (läuft in der Connectivity Subscription)
 logging:

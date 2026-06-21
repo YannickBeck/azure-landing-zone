@@ -123,9 +123,9 @@ doc.add_paragraph()
 # ═══════════════════════════════════════════════════════════════════
 # 1. MANAGEMENT GROUPS
 # ═══════════════════════════════════════════════════════════════════
-doc.add_heading("1. Management Groups (8)", level=1)
+doc.add_heading("1. Management Groups (7)", level=1)
 add_body(doc,
-    "Der ALZ Bicep Accelerator erstellt eine standardisierte Hierarchie von 8 Management Groups "
+    "Der ALZ Bicep Accelerator erstellt eine standardisierte Hierarchie von 7 Management Groups "
     "unterhalb des Tenant Root. Jede MG definiert einen Vertrauensbereich mit eigenem "
     "Policy- und RBAC-Scope. Kind-MGs erben alle Assignments der Eltern-MG."
 )
@@ -140,12 +140,11 @@ add_table(doc,
         ["alz-landingzones",               "Landing Zones",                      "alz",               "Container für alle Workload-Subscriptions"],
         ["alz-landingzones-corp",          "Corp",                               "alz-landingzones",  "Interne Workloads; Deny Public Endpoints/IP; Private DNS – Produktion Sub"],
         ["alz-sandbox",                    "Sandbox",                            "alz",               "Experimente; gelockerte Policies; kein Prod-Scope – Sandbox Sub"],
-        ["alz-decommissioned",             "Decommissioned",                     "alz",               "Stilllegungszone; Resource-Erstellung gesperrt"],
     ],
     col_widths=[1.9, 1.7, 1.6, 2.8]
 )
 add_section_note(doc,
-    "Policy-Vererbung: Assignments auf 'alz' gelten für alle 7 Kind-MGs. "
+    "Policy-Vererbung: Assignments auf 'alz' gelten für alle 5 Kind-MGs. "
     "Assignments auf 'alz-platform' gelten für connectivity. "
     "Assignments auf 'alz-landingzones' gelten für corp. "
     "Nicht genutzte MG-Ebenen (identity, management, security, online, local) wurden bewusst weggelassen – "
@@ -332,13 +331,6 @@ doc.add_heading("2.7 alz-sandbox – 1 Assignment", level=2)
 add_table(doc,
     ["Assignment-Name", "Typ", "Effekt"],
     [["Enforce-ALZ-Sandbox", "Initiative", "Audit – Sandbox-spezifische Guardrails; kein Enforce; kein ExpressRoute/VPN erlaubt"]],
-    col_widths=[2.5, 0.8, 4.7]
-)
-
-doc.add_heading("2.8 alz-decommissioned – 1 Assignment", level=2)
-add_table(doc,
-    ["Assignment-Name", "Typ", "Effekt"],
-    [["Enforce-ALZ-Decomm", "Initiative", "Deny – Keine neue Ressourcen-Erstellung; vorhandene Ressourcen bleiben bestehen"]],
     col_widths=[2.5, 0.8, 4.7]
 )
 
@@ -589,7 +581,6 @@ add_table(doc,
         ["Deploy-MDFC-SqlAtp",             "2 Policies (SQL Server ATP, SQL MI ATP)",                              "alz, alz-landingzones"],
         ["Deny-Public-Endpoints",          "59 Policies (Deny Public Endpoint je PaaS-Dienst)",                   "alz-landingzones-corp"],
         ["Enforce-ACSB",                   "~15 Policies (CIS/NIST Baseline Audit-Policies)",                     "alz"],
-        ["Enforce-ALZ-Decomm",             "2 Policies (Deny Compute, Deny Resource Creation)",                   "alz-decommissioned"],
         ["Enforce-ALZ-Sandbox",            "2 Policies (Deny ER/VPN, Deny Prod-Ressourcen)",                      "alz-sandbox"],
         ["Enforce-ALDO-Services",          "~5 Policies (Azure Local / Sovereign Services)",                      "alz-landingzones-local"],
         ["Enforce-Guardrails-APIM",        "~6 Policies (TLS, Private, WAF, SKU-Check)",                          "alz-landingzones, alz-platform"],
@@ -843,14 +834,13 @@ add_body(doc,
 add_table(doc,
     ["Ressource (exakter Name)", "Typ", "Region", "Resource Group / Scope"],
     [
-        # Management Groups (8)
+        # Management Groups (7)
         ["alz",                               "Management Group", "–",   "Tenant Root"],
         ["alz-platform",                      "Management Group", "–",   "alz"],
         ["alz-platform-connectivity",         "Management Group", "–",   "alz-platform"],
         ["alz-landingzones",                  "Management Group", "–",   "alz"],
         ["alz-landingzones-corp",             "Management Group", "–",   "alz-landingzones"],
         ["alz-sandbox",                       "Management Group", "–",   "alz"],
-        ["alz-decommissioned",                "Management Group", "–",   "alz"],
         # Resource Groups
         ["rg-alz-logging-germanywestcentral", "Resource Group",   "GWC", "Connectivity Sub"],
         ["rg-alz-conn-germanywestcentral",    "Resource Group",   "GWC", "Connectivity Sub"],

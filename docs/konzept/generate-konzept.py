@@ -339,8 +339,7 @@ def build():
             ["9",  "Governance – Platform Management",   "Tenant", "platform-management"],
             ["10", "Governance – Platform Security",     "Tenant", "platform-security"],
             ["11", "Governance – Sandbox",               "Tenant", "sandbox + Enforce-ALZ-Sandbox Guardrails"],
-            ["12", "Governance – Decommissioned",        "Tenant", "decommissioned + Enforce-ALZ-Decomm Guardrails"],
-            ["13", "RBAC – Platform",                    "Tenant", "Rollen-Zuweisung auf platform-MG"],
+            ["12", "RBAC – Platform",                    "Tenant", "Rollen-Zuweisung auf platform-MG"],
             ["14", "RBAC – Platform Connectivity",       "Tenant", "Rollen-Zuweisung auf connectivity-MG"],
             ["15", "RBAC – Landing Zones",               "Tenant", "Rollen-Zuweisung auf landingzones-MG"],
             ["16", "Core Logging",                       "Sub",    "Log Analytics Workspace, 3 DCRs, Managed Identity (avm/ptn/alz/ama:0.2.0)"],
@@ -393,8 +392,7 @@ def build():
         "   │   ├─ alz-landingzones-corp       → intern, keine Public Endpoints\n"
         "   │   ├─ alz-landingzones-online     → internetseitige Workloads\n"
         "   │   └─ alz-landingzones-local      → souverän / vertraulich\n"
-        "   ├─ alz-sandbox                     → Experimente (gelockerte Policies)\n"
-        "   └─ alz-decommissioned              → Stilllegung (gesperrt)"
+        "   └─ alz-sandbox                     → Experimente (gelockerte Policies)"
     )
     tree_r.font.name = "Courier New"
     tree_r.font.size = Pt(9)
@@ -414,7 +412,6 @@ def build():
             ["alz-landingzones-online", "alz-landingzones", "Internetseitige Workloads (z. B. Public APIs, Websites)"],
             ["alz-landingzones-local", "alz-landingzones", "Souveräne / vertrauliche Workloads (Azure Local)"],
             ["alz-sandbox", "alz", "Experimentier-Bereich mit gelockerten Policies"],
-            ["alz-decommissioned", "alz", "Stilllegungszone; Ressourcen-Erstellung gesperrt"],
         ],
         col_widths=[2.3, 1.8, 2.9]
     )
@@ -455,7 +452,7 @@ def build():
     add_table(doc,
         ["Element", "Konvention / Bereich"],
         [
-            ["Management Groups",       "alz, alz-platform, alz-platform-connectivity, alz-landingzones, alz-landingzones-corp, alz-sandbox, alz-decommissioned"],
+            ["Management Groups",       "alz, alz-platform, alz-platform-connectivity, alz-landingzones, alz-landingzones-corp, alz-sandbox"],
             ["Resource Groups",         "rg-alz-<zweck>-<region>"],
             ["Logging",                 "law-alz-<region>, mi-alz-<region>, dcr-*-alz-<region>"],
             ["Netzwerk-Ressourcen",     "vnet-alz-hub-<region>, afw-alz-<region>, bas-alz-<region>"],
@@ -479,7 +476,7 @@ def build():
     )
     p = doc.add_paragraph(style="Standard klein")
     run = p.add_run(
-        "▶ Vollständige Referenz: Alle 8 Management Groups, 149 Policy-Definitionen, 42 Initiativen, "
+        "▶ Vollständige Referenz: Alle 7 Management Groups, 149 Policy-Definitionen, 42 Initiativen, "
         "118 Assignments, 5 RBAC-Rollen und 22 Bicep-Module sind konkret und namentlich dokumentiert in: "
         "Azure-Landing-Zone-ALZ-Referenz.docx"
     )
@@ -492,7 +489,7 @@ def build():
             ["Policy-Set-Definitionen (Initiativen)", "42",
              "Deploy-MDFC-Config, Deploy-Private-DNS-Zones, Enforce-Guardrails-* je Dienst, Enforce-ACSB …"],
             ["Policy-Assignments", "118",
-             "Direkt zugewiesen auf 7 MG-Ebenen; Kind-MGs erben zusätzlich"],
+             "Direkt zugewiesen auf 6 MG-Ebenen; Kind-MGs erben zusätzlich"],
             ["Custom RBAC-Rollen", "5",
              "Subscription-Owner, Security-Operations, Network-Management, Application-Owners, Network-Subnet-Contributor"],
         ],
@@ -514,8 +511,7 @@ def build():
             ["alz-platform-management",    "0",  "(erbt von platform)"],
             ["alz-platform-security",      "0",  "(erbt von platform)"],
             ["alz-sandbox",                "1",  "Enforce-ALZ-Sandbox"],
-            ["alz-decommissioned",         "1",  "Enforce-ALZ-Decomm"],
-            ["Summe",                      "123", ""],
+            ["Summe",                      "122", ""],
         ],
         col_widths=[2.3, 0.9, 3.8]
     )
