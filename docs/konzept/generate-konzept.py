@@ -902,32 +902,32 @@ def build():
         "Die Kosten der Azure Landing Zone werden primär durch die Netzwerk-Dienste "
         "bestimmt. Governance-Objekte (MGs, Policies, RBAC), Logging und "
         "Identity-Ressourcen sind nahezu kostenlos. Bechtle empfiehlt eine "
-        "zielgerichtete Konfiguration mit ~€1.050/Monat, die alle wesentlichen "
+        "zielgerichtete Konfiguration mit ~€765/Monat, die alle wesentlichen "
         "Funktionen enthält und durch nachträgliche Schalter auf den vollen "
         "Microsoft-Standard (~€5.800/Monat) erweiterbar ist."
     )
 
     doc.add_heading("Kostenvergleich: Varianten im Überblick", level=2)
     add_table(doc,
-        ["Dienst / Komponente", "Microsoft-Default", "Bechtle-Empfehlung (~€1.050)", "Pilot (€0)"],
+        ["Dienst / Komponente", "Microsoft-Default", "Bechtle-Empfehlung (~€765)", "Pilot (€0)"],
         [
-            ["Azure Firewall",              "2x Premium ~€2.200", "1x Standard ~€700",   "–"],
-            ["DDoS Network Protection",     "~€2.500",            "–",                    "–"],
-            ["ExpressRoute Gateway",        "2x ~€560",           "–",                    "–"],
-            ["VPN Gateway",                 "2x ~€280",           "1x ~€140",             "–"],
-            ["Azure Bastion",               "2x ~€240",           "1x ~€120",             "–"],
-            ["DNS Private Resolver",        "2x ~€50",            "1x ~€25",              "–"],
-            ["Private DNS Zones",           "~€15",               "~€15",                 "–"],
-            ["Log Analytics Workspace",     "~€50",               "~€50",                 "~€50"],
-            ["MGs / Policies / RBAC",       "€0",                 "€0",                   "€0"],
-            ["Gesamt",                      "~€5.800",            "~€1.050",              "ca. €50"],
-            ["Regionen",                    "GWC + NE (beide)",   "GWC (Primär)",         "GWC"],
-            ["Netzwerk-Typ",                "hubNetworking",      "hubNetworking",        "none"],
+            ["Azure Firewall",              "2x Premium ~€2.200", "1x Standard ~€700",  "–"],
+            ["DDoS Network Protection",     "~€2.500",            "–",                   "–"],
+            ["ExpressRoute Gateway",        "2x ~€560",           "–",                   "–"],
+            ["VPN Gateway",                 "2x ~€280",           "– (zurückgestellt)",  "–"],
+            ["Azure Bastion",               "2x ~€240",           "– (zurückgestellt)",  "–"],
+            ["DNS Private Resolver",        "2x ~€50",            "– (zurückgestellt)",  "–"],
+            ["Private DNS Zones",           "~€15",               "~€15",                "–"],
+            ["Log Analytics Workspace",     "~€50",               "~€50",                "~€50"],
+            ["MGs / Policies / RBAC",       "€0",                 "€0",                  "€0"],
+            ["Gesamt",                      "~€5.800",            "~€765",               "ca. €50"],
+            ["Regionen",                    "GWC + NE (beide)",   "GWC (Primär)",        "GWC"],
+            ["Netzwerk-Typ",                "hubNetworking",      "hubNetworking",       "none"],
         ],
         col_widths=[2.1, 1.6, 2.0, 1.3]
     )
 
-    doc.add_heading("Bechtle-Empfehlung: ~€1.050/Monat", level=2)
+    doc.add_heading("Bechtle-Empfehlung: ~€765/Monat", level=2)
     add_body(doc,
         "Die Bechtle-Konfiguration stellt alle produktionsrelevanten Netzwerk- und "
         "Sicherheitsdienste in der Primärregion (Germany West Central) bereit. "
@@ -938,7 +938,7 @@ def build():
         ["Funktion", "Status", "Aktivierbar durch"],
         [
             ["Management Groups (7 MGs)",               "Aktiv", "–"],
-            ["Policy-Set (149 Defs / 118 Assignments)", "Aktiv", "–"],
+            ["Policy-Set (149 Defs / 117 Assignments)", "Aktiv", "–"],
             ["Zentrales Logging (LAW + 3 DCRs)",        "Aktiv", "–"],
             ["Hub-and-Spoke-Topologie",                 "Aktiv", "–"],
             ["Azure Firewall (Standard, 1 Region)",     "Aktiv", "–"],
@@ -963,9 +963,9 @@ def build():
              "ca. €50 (nur LAW)",
              "Sofort – MGs, Policies, Logging, kein Kostenrisiko"],
             ["2 – Bechtle-Empfehlung",
-             "Firewall Standard, 1 Region, kein DDoS/ER",
-             "~€1.050",
-             "Erste Workloads; On-Prem-Anbindung geplant"],
+             "Firewall Standard, 1 Region, kein DDoS/ER/Bastion/VPN",
+             "~€765",
+             "Erste Workloads; On-Prem-Anbindung noch nicht aktiv"],
             ["3 – Geo-Redundanz",
              "+ Sekundar-Hub North Europe",
              "~€1.800",
@@ -1007,8 +1007,8 @@ def build():
              "– Keine Netzwerkkonnektivität\n– Workloads können nicht deployt werden\n– Kein Firewall-/Bastion-Schutz",
              "Einstieg, PoC, Compliance-Audit ohne Netzwerkbedarf"],
             ["Bechtle-Empfehlung\n(Standard, 1 Region)",
-             "~€1.050",
-             "+ Voller Funktionsumfang\n+ Firewall, Bastion, VPN, DNS aktiv\n+ 4× günstiger als Microsoft-Default\n+ In-Place-Upgrade auf Premium möglich",
+             "~€765",
+             "+ Firewall Standard + Private DNS aktiv\n+ Bastion, VPN, DNS Resolver per Schalter aktivierbar\n+ 7× günstiger als Microsoft-Default\n+ In-Place-Upgrade auf Premium möglich",
              "– Keine zweite Region (kein Geo-Failover)\n– Kein IDPS / TLS-Inspektion\n– Kein DDoS-Schutz",
              "Standard-Produktionsumgebungen, erste Workloads"],
             ["Geo-Redundanz\n(+ Hub North Europe)",
