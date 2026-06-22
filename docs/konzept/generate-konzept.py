@@ -712,12 +712,12 @@ def build():
     code_p = doc.add_paragraph(style="Normal")
     code_r = code_p.add_run(
         "azureFirewallSettings:        { deployAzureFirewall: true, azureFirewallTier: 'Standard' }\n"
-        "bastionHostSettings:          { deployBastion: true }\n"
-        "vpnGatewaySettings:           { deployVpnGateway: true }\n"
+        "bastionHostSettings:          { deployBastion: false }        // zurueckgestellt – bei Bedarf: true (+EUR120/Mon)\n"
+        "vpnGatewaySettings:           { deployVpnGateway: false }     // zurueckgestellt – bei Bedarf: true (+EUR140/Mon)\n"
         "expressRouteGatewaySettings:  { deployExpressRouteGateway: false }  // bei Bedarf: true\n"
         "ddosProtectionPlanSettings:   { deployDdosProtectionPlan: false }   // bei Bedarf: true\n"
-        "privateDnsSettings:           { deployPrivateDnsZones: true, deployDnsPrivateResolver: true }\n"
-        "// Sekundär-Hub (northeurope): Deployment-Stufe 17 für zweite Region nicht ausführen"
+        "privateDnsSettings:           { deployPrivateDnsZones: true, deployDnsPrivateResolver: false }  // Resolver bei Bedarf: true\n"
+        "// Sekundaer-Hub (northeurope): Deployment-Stufe 17 fuer zweite Region nicht ausfuehren"
     )
     code_r.font.name = "Courier New"
     code_r.font.size = Pt(8)
