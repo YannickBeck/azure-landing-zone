@@ -212,7 +212,7 @@ def build():
         "Sicherheit und Defender"
     )
     add_bullet(doc,
-        "18 geordnete Deployment-Stufen, vollständig als Code versioniert und über "
+        "17 geordnete Deployment-Stufen, vollständig als Code versioniert und über "
         "What-If-Previews abgesichert, gewährleisten reproduzierbare, nachvollziehbare "
         "und rückrollbare Änderungen.",
         "Automatisierung und IaC"
@@ -324,7 +324,7 @@ def build():
     add_bullet(doc, "What-If vor Apply: Pipeline zeigt geplante Änderungen zur Freigabe, bevor etwas ausgeführt wird")
     add_bullet(doc, "Approval-Gate: explizite Freigabe erforderlich, bevor die Pipeline Änderungen am Tenant vornimmt")
 
-    doc.add_heading("18 geordnete Deployment-Stufen", level=2)
+    doc.add_heading("17 geordnete Deployment-Stufen", level=2)
     add_table(doc,
         ["#", "Stufe", "Scope", "Inhalt"],
         [
@@ -343,7 +343,7 @@ def build():
             ["14", "RBAC – Platform Connectivity",       "Tenant", "Rollen-Zuweisung auf connectivity-MG"],
             ["15", "RBAC – Landing Zones",               "Tenant", "Rollen-Zuweisung auf landingzones-MG"],
             ["16", "Core Logging",                       "Sub",    "Log Analytics Workspace, 3 DCRs, Managed Identity (avm/ptn/alz/ama:0.2.0)"],
-            ["17", "Hub Networking",                     "Sub",    "Hub-VNets, Firewall, Bastion, Gateways, DNS (aktiv bei hubNetworking)"],
+            ["17", "Hub Networking",                     "Sub",    "Hub-VNet, Firewall Standard, Private DNS Zones (aktiv); Bastion, VPN Gateway, DNS Resolver zurueckgestellt"],
             ["18", "Virtual WAN",                        "Sub",    "vWAN, vHub, Firewall (aktiv bei vwanConnectivity; Stufe 17 und 18 exklusiv)"],
         ],
         col_widths=[0.3, 1.9, 0.6, 4.2]
