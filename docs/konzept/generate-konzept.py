@@ -254,7 +254,7 @@ def build():
         "Das Zielbild ist eine standardisierte, mandantenweite Azure-Grundstruktur "
         "als stabiles Fundament für alle künftigen Workloads:"
     )
-    add_bullet(doc, "Management-Group-Hierarchie (8 MGs) als strukturierter Verwaltungsrahmen für alle Subscriptions")
+    add_bullet(doc, "Management-Group-Hierarchie (7 MGs) als strukturierter Verwaltungsrahmen für alle Subscriptions")
     add_bullet(doc, "Vollständiges ALZ-Policy-Set für automatische Governance-Durchsetzung ohne manuelle Eingriffe je Workload")
     add_bullet(doc, "Zentrales Logging und Monitoring als einheitlicher Sicherheits- und Betriebs-Backbone")
     add_bullet(doc, "Hub-and-Spoke-Netzwerk für sichere, private Konnektivität zwischen Workloads und On-Premises")
@@ -273,7 +273,7 @@ def build():
         ["Erfolgskriterium", "Messgröße / Nachweis"],
         [
             ["Management-Group-Hierarchie steht",
-             "8 MGs im Azure Portal sichtbar, Tenant Root → alz → Unterebenen"],
+             "7 MGs im Azure Portal sichtbar, Tenant Root → alz → Unterebenen"],
             ["Policies greifen",
              "118 Assignments aktiv; Azure Policy Compliance-Report zeigt Ergebnisse"],
             ["Zentrales Logging aktiv",
@@ -942,15 +942,15 @@ def build():
     add_table(doc,
         ["Funktion", "Status", "Aktivierbar durch"],
         [
-            ["Management Groups (12 MGs)",              "Aktiv", "–"],
-            ["Policy-Set (149 Defs / 123 Assignments)", "Aktiv", "–"],
+            ["Management Groups (7 MGs)",               "Aktiv", "–"],
+            ["Policy-Set (149 Defs / 118 Assignments)", "Aktiv", "–"],
             ["Zentrales Logging (LAW + 3 DCRs)",        "Aktiv", "–"],
             ["Hub-and-Spoke-Topologie",                 "Aktiv", "–"],
             ["Azure Firewall (Standard, 1 Region)",     "Aktiv", "–"],
-            ["Azure Bastion (1 Region)",                "Aktiv", "–"],
-            ["VPN Gateway (1 Region)",                  "Aktiv", "–"],
             ["Private DNS Zones",                       "Aktiv", "–"],
-            ["DNS Private Resolver (1 Region)",         "Aktiv", "–"],
+            ["Azure Bastion (1 Region)",          "Zurückgestellt", "deployBastion: true (+€120/Mon)"],
+            ["VPN Gateway (1 Region)",            "Zurückgestellt", "deployVpnGateway: true (+€140/Mon)"],
+            ["DNS Private Resolver (1 Region)",   "Zurückgestellt", "deployDnsPrivateResolver: true (+€25/Mon)"],
             ["Firewall Premium (IDPS, TLS)",      "Deferred", "azureFirewallTier: Premium (In-Place-Upgrade, kein Rebuild)"],
             ["DDoS Network Protection",           "Deferred", "deployDdosProtectionPlan: true (bei internet-facing Workloads)"],
             ["ExpressRoute Gateway",              "Deferred", "deployExpressRouteGateway: true (bei ER-Leitungsbestellung)"],
@@ -1300,13 +1300,12 @@ def build():
             ["9",  "mgmt_groups_platform_management",     "managementGroup", "core/governance/mgmt-groups/platform/platform-management/main.bicep"],
             ["10", "mgmt_groups_platform_security",       "managementGroup", "core/governance/mgmt-groups/platform/platform-security/main.bicep"],
             ["11", "mgmt_groups_sandbox",                 "managementGroup", "core/governance/mgmt-groups/sandbox/main.bicep"],
-            ["12", "mgmt_groups_decommissioned",          "managementGroup", "core/governance/mgmt-groups/decommissioned/main.bicep"],
-            ["13", "rbac_platform",                       "managementGroup", "core/governance/mgmt-groups/platform/main-rbac.bicep"],
-            ["14", "rbac_platform_connectivity",          "managementGroup", "core/governance/mgmt-groups/platform/platform-connectivity/main-rbac.bicep"],
-            ["15", "rbac_landingzones",                   "managementGroup", "core/governance/mgmt-groups/landingzones/main-rbac.bicep"],
-            ["16", "logging",                             "subscription",    "core/logging/main.bicep"],
-            ["17", "hub_networking",                      "subscription",    "networking/hubnetworking/main.bicep (aktiv bei hubNetworking)"],
-            ["18", "virtual_wan",                         "subscription",    "networking/virtualwan/main.bicep (aktiv bei vwanConnectivity)"],
+            ["12", "rbac_platform",                       "managementGroup", "core/governance/mgmt-groups/platform/main-rbac.bicep"],
+            ["13", "rbac_platform_connectivity",          "managementGroup", "core/governance/mgmt-groups/platform/platform-connectivity/main-rbac.bicep"],
+            ["14", "rbac_landingzones",                   "managementGroup", "core/governance/mgmt-groups/landingzones/main-rbac.bicep"],
+            ["15", "logging",                             "subscription",    "core/logging/main.bicep"],
+            ["16", "hub_networking",                      "subscription",    "networking/hubnetworking/main.bicep (aktiv bei hubNetworking)"],
+            ["17", "virtual_wan",                         "subscription",    "networking/virtualwan/main.bicep (aktiv bei vwanConnectivity)"],
         ],
         col_widths=[0.3, 2.5, 1.1, 3.1]
     )

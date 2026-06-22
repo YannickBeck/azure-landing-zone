@@ -153,11 +153,11 @@ add_section_note(doc,
 doc.add_page_break()
 
 # ═══════════════════════════════════════════════════════════════════
-# 2. POLICY ASSIGNMENTS (123) je MG
+# 2. POLICY ASSIGNMENTS (118) je MG
 # ═══════════════════════════════════════════════════════════════════
 doc.add_heading("2. Policy Assignments je Management Group (118 gesamt)", level=1)
 add_body(doc,
-    "Die 118 Policy Assignments sind konkret auf 7 der 8 Management Groups verteilt. "
+    "Die 118 Policy Assignments sind konkret auf alle 7 Management Groups verteilt. "
     "Assignments bestehen aus einer Kombination von Policy-Definitionen und Initiativen (Policy Sets). "
     "Im Auslieferungszustand sind Enforce-Guardrails-*-Initiativen auf 'DoNotEnforce' gesetzt "
     "(Audit-only); Deploy-* Assignments sind auf 'Enabled' gesetzt."
