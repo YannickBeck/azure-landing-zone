@@ -477,7 +477,7 @@ def build():
     p = doc.add_paragraph(style="Standard klein")
     run = p.add_run(
         "▶ Vollständige Referenz: Alle 7 Management Groups, 149 Policy-Definitionen, 42 Initiativen, "
-        "118 Assignments, 5 RBAC-Rollen und 22 Bicep-Module sind konkret und namentlich dokumentiert in: "
+        "117 Assignments, 5 RBAC-Rollen und 22 Bicep-Module sind konkret und namentlich dokumentiert in: "
         "Azure-Landing-Zone-ALZ-Referenz.docx"
     )
     run.bold = True
@@ -488,7 +488,7 @@ def build():
              "Monitoring (55), Network (20), Storage (16), SQL (13), Guardrails je Dienst …"],
             ["Policy-Set-Definitionen (Initiativen)", "42",
              "Deploy-MDFC-Config, Deploy-Private-DNS-Zones, Enforce-Guardrails-* je Dienst, Enforce-ACSB …"],
-            ["Policy-Assignments", "118",
+            ["Policy-Assignments", "117",
              "Direkt zugewiesen auf 6 MG-Ebenen; Kind-MGs erben zusätzlich"],
             ["Custom RBAC-Rollen", "5",
              "Subscription-Owner, Security-Operations, Network-Management, Application-Owners, Network-Subnet-Contributor"],
@@ -503,15 +503,10 @@ def build():
             ["alz (Intermediate Root)",   "17", "Deploy-MDFC-Config-H224, Deploy-MDEndpoints, Deploy-AzActivity-Log, Enforce-ACSB"],
             ["alz-landingzones",           "53", "Deny-Storage-http, Deny-MgmtPorts-Internet, Deploy-VM-Monitoring, Enforce-Guardrails-*"],
             ["alz-landingzones-corp",      "5",  "Deny-Public-Endpoints, Deny-Public-IP-On-NIC, Deny-HybridNetworking, Deploy-Private-DNS-Zones"],
-            ["alz-landingzones-online",    "0",  "(erbt von landingzones)"],
-            ["alz-landingzones-local",     "1",  "Enforce-ALDO-Services"],
             ["alz-platform",               "40", "Deploy-VM-Monitoring, Enforce-Backup, Enforce-Guardrails-*, DenyAction-DeleteUAMIAMA"],
             ["alz-platform-connectivity",  "1",  "Enable-DDoS-VNET"],
-            ["alz-platform-identity",      "4",  "Deny-MgmtPorts-Internet, Deny-Public-IP, Deny-Subnet-Without-Nsg, Deploy-VM-Backup"],
-            ["alz-platform-management",    "0",  "(erbt von platform)"],
-            ["alz-platform-security",      "0",  "(erbt von platform)"],
             ["alz-sandbox",                "1",  "Enforce-ALZ-Sandbox"],
-            ["Summe",                      "122", ""],
+            ["Summe",                      "117", ""],
         ],
         col_widths=[2.3, 0.9, 3.8]
     )
